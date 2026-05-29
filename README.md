@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # LP2M_Bar_Mngt
 
 Application standalone de gestion de bar / restaurant en C#, ASP.NET Core, Windows Forms, WPF et SQLite.
@@ -163,3 +164,6 @@ Fonctions avancees disponibles dans la version web :
 - images pour les produits et les categories ;
 - en-tetes web de base pour reduire les risques de contenu injecte et d'integration externe non souhaitee.
 - double authentification TOTP par utilisateur avec generation/reinitialisation de cle 2FA.
+=======
+# LP2M_Bar_Mngt
+>>>>>>> 2a421f799cf67ef62ebe970f7fbdf4d6ab6cc039
