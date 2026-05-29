@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\LP2M_Bar_Mngt.Application\LP2M_Bar_Mngt.Application.csproj" />
+    <ProjectReference Include="..\LP2M_Bar_Mngt.Infrastructure\LP2M_Bar_Mngt.Infrastructure.csproj" />
+    <ProjectReference Include="..\LP2M_Bar_Mngt.Domain\LP2M_Bar_Mngt.Domain.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+</Project>

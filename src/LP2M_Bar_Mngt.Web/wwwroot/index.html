@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bar Management</title>
+  <link rel="stylesheet" href="styles.css?v=20260529-ui-pro">
+</head>
+<body>
+  <section id="authView" class="auth-view" hidden>
+    <form id="loginForm" class="login-card">
+      <div class="login-brand">
+        <strong>LP2M</strong>
+        <span>La pause de Medoune</span>
+      </div>
+      <h1>Connexion</h1>
+      <p id="loginStatus" class="status">Authentification requise pour acceder a la caisse.</p>
+      <label>Identifiant<input id="loginUsername" autocomplete="username" required autofocus></label>
+      <label>Mot de passe<input id="loginPassword" type="password" autocomplete="current-password" required></label>
+      <label id="loginTwoFactorGroup" hidden>Code 2FA<input id="loginTwoFactorCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8"></label>
+      <label class="check"><input id="loginRemember" type="checkbox"> Garder la session ouverte</label>
+      <button class="primary" id="loginSubmitBtn" type="submit">Se connecter</button>
+      <button id="loginBackBtn" type="button" hidden>Changer identifiant</button>
+      <p class="login-help">Compte initial : admin / admin123</p>
+    </form>
+  </section>
+
+  <div id="appView" class="app-view" hidden>
+    <aside class="sidebar">
+      <div class="brand">
+        <strong id="brandSigle">LP2M</strong>
+        <span id="brandName">La pause de Medoune</span>
+      </div>
+      <nav id="nav"></nav>
+      <div class="offline">FCFA - SQLite local<br><b>Mode hors connexion</b></div>
+    </aside>
+
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <h1 id="pageTitle">Tableau de bord</h1>
+          <p id="pageSubtitle">Vue globale de l'activite locale du bar.</p>
+          <p id="status" class="status">Initialisation...</p>
+        </div>
+        <div class="top-actions">
+          <span id="currentDate" class="date-pill"></span>
+          <span id="currentUser" class="user-pill"></span>
+          <label class="show-hidden"><input id="showHidden" type="checkbox"> Afficher masques</label>
+          <button id="themeToggleBtn" type="button" aria-pressed="false">Theme sombre</button>
+          <button id="logoutBtn">Deconnexion</button>
+          <button class="primary" id="refreshBtn">Actualiser</button>
+        </div>
+      </header>
+
+      <section class="metrics">
+        <article><span>Ventes du jour</span><b id="metricRevenue">0 F CFA</b></article>
+        <article><span>Tickets</span><b id="metricTickets">0</b></article>
+        <article><span>Sessions ouvertes</span><b id="metricSessions">0</b></article>
+        <article><span>Alertes stock</span><b id="metricLowStock">0</b></article>
+        <article><span>Depenses du jour</span><b id="metricExpenses">0 F CFA</b></article>
+        <article><span>Solde caisse</span><b id="metricCashBalance">0 F CFA</b></article>
+      </section>
+
+      <section id="dashboardInsights" class="dashboard-insights"></section>
+
+      <section class="workspace">
+        <section class="panel actions-panel">
+          <div class="panel-title">
+            <h2>Actions</h2>
+            <p>Operations et formulaires disponibles pour le module courant.</p>
+          </div>
+          <div id="actions" class="action-list"></div>
+        </section>
+
+        <section class="panel data-panel">
+          <div class="panel-title">
+            <h2 id="tableTitle">Donnees</h2>
+            <p id="tableSubtitle">Etat courant lu depuis SQLite.</p>
+          </div>
+          <div class="table-controls">
+            <label>Recherche<input id="tableSearch" placeholder="Ticket, produit, client, statut"></label>
+            <label>Filtre<select id="tableFilter">
+              <option value="all">Tous les elements</option>
+              <option value="visible">Visibles</option>
+              <option value="hidden">Masques</option>
+              <option value="alert">Alertes / inactifs</option>
+            </select></label>
+            <label>Lignes<select id="tablePageSize">
+              <option value="10">10</option>
+              <option value="25" selected>25</option>
+              <option value="50">50</option>
+              <option value="9999">Tous</option>
+            </select></label>
+          </div>
+          <div id="bulkBar" class="bulk-bar" hidden>
+            <span id="bulkCount">0 selection</span>
+            <button id="bulkHideBtn">Masquer</button>
+            <button id="bulkShowBtn">Afficher</button>
+            <button id="bulkDeleteBtn">Supprimer</button>
+          </div>
+          <div class="table-wrap">
+            <table id="dataTable"></table>
+          </div>
+          <div id="tablePager" class="table-pager"></div>
+          <div class="stock-box">
+            <h3>Alertes stock faible</h3>
+            <table id="lowStockTable"></table>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="cashOpenModal">
+    <form method="dialog" class="modal-card" id="cashOpenForm">
+      <header>
+        <h2>Ouvrir une caisse</h2>
+        <button type="button" class="icon" data-close="cashOpenModal">&times;</button>
+      </header>
+      <div class="grid-form">
+        <label>Caissier<select id="cashOpenCashier" required></select></label>
+        <label>Fond initial (FCFA)<input id="cashOpenAmount" type="number" min="0" step="1" required></label>
+      </div>
+      <footer>
+        <button type="button" data-close="cashOpenModal">Annuler</button>
+        <button class="primary" type="submit">Ouvrir</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="cashCloseModal">
+    <form method="dialog" class="modal-card" id="cashCloseForm">
+      <header>
+        <h2>Cloturer une caisse</h2>
+        <button type="button" class="icon" data-close="cashCloseModal">&times;</button>
+      </header>
+      <div class="grid-form">
+        <label>Session ouverte<select id="cashCloseSession" required></select></label>
+        <label>Montant declare (FCFA)<input id="cashCloseAmount" type="number" min="0" step="1" required></label>
+      </div>
+      <footer>
+        <button type="button" data-close="cashCloseModal">Annuler</button>
+        <button class="primary" type="submit">Cloturer</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="saleModal">
+    <form method="dialog" class="modal-card sale-card" id="saleForm">
+      <header>
+        <h2>Nouvelle vente</h2>
+        <button type="button" class="icon" data-close="saleModal">&times;</button>
+      </header>
+      <div class="grid-form">
+        <label>Session de caisse<select id="saleCashSession" required></select></label>
+        <label>Client<input id="saleCustomerName" placeholder="Client comptoir"></label>
+        <label>Produit<select id="saleProduct"></select></label>
+        <label>Quantite<input id="saleQuantity" type="number" min="0.01" step="0.01" required></label>
+        <label>Remise (FCFA)<input id="saleDiscount" type="number" min="0" step="1"></label>
+        <label>Paiement<select id="salePayment" required>
+          <option value="1">Especes</option>
+          <option value="2">Carte</option>
+          <option value="3">Mobile money</option>
+          <option value="4">Credit client</option>
+        </select></label>
+        <button type="button" id="saleAddToCartBtn">Ajouter au panier</button>
+      </div>
+      <section class="sale-calculator">
+        <div class="sale-tools">
+          <label>Rechercher<input id="saleProductSearch" placeholder="Nom, SKU ou code"></label>
+          <label>Categorie<select id="saleCategoryFilter"></select></label>
+        </div>
+        <div class="sale-layout">
+          <div id="saleProductGrid" class="sale-product-grid"></div>
+          <aside class="sale-summary">
+            <img id="saleSelectedImage" class="sale-selected-image" alt="">
+            <h3 id="saleSelectedName">Selectionne un produit</h3>
+            <p id="saleSelectedMeta">La calculatrice affichera le prix et le stock.</p>
+            <div class="ticket-line"><span>Prix unitaire</span><b id="saleUnitPrice">0 F CFA</b></div>
+            <div class="ticket-line"><span>Quantite saisie</span><b id="saleQtyPreview">1</b></div>
+            <h3>Panier</h3>
+            <div id="saleCartList" class="sale-cart-list"></div>
+            <button type="button" id="saleClearCartBtn">Vider panier</button>
+            <div class="ticket-line"><span>Sous-total panier</span><b id="saleSubtotal">0 F CFA</b></div>
+            <div class="ticket-line"><span>Remise</span><b id="saleDiscountPreview">0 F CFA</b></div>
+            <div class="ticket-line ticket-total"><span>Total</span><b id="saleTotal">0 F CFA</b></div>
+          </aside>
+        </div>
+      </section>
+      <footer>
+        <button type="button" data-close="saleModal">Annuler</button>
+        <button class="primary" type="submit">Encaisser</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="productModal">
+    <form method="dialog" class="modal-card" id="productForm">
+      <header>
+        <h2 id="productModalTitle">Produit</h2>
+        <button type="button" class="icon" data-close="productModal">&times;</button>
+      </header>
+      <input type="hidden" id="productId">
+      <div class="grid-form">
+        <label>Nom<input id="productName" required></label>
+        <label>Categorie<select id="productCategory" required></select></label>
+        <label>SKU<input id="productSku"></label>
+        <label>Code-barres<input id="productBarcode"></label>
+        <label>Prix de vente (FCFA)<input id="productSalePrice" type="number" step="1" min="0" required></label>
+        <label>Cout d'achat (FCFA)<input id="productCostPrice" type="number" step="1" min="0" required></label>
+        <label>Seuil stock faible<input id="productThreshold" type="number" step="1" min="0"></label>
+        <label>Stock initial<input id="productInitialQty" type="number" step="1" min="0"></label>
+        <label>Image produit<input id="productImageFile" type="file" accept="image/*" capture="environment"></label>
+        <button type="button" id="productPhotoBtn">Prendre photo</button>
+      </div>
+      <img id="productImagePreview" class="image-preview" alt="">
+      <label class="check"><input id="productStockManaged" type="checkbox" checked> Produit gere en stock</label>
+      <label class="check"><input id="productActive" type="checkbox" checked> Produit actif</label>
+      <footer>
+        <button type="button" data-close="productModal">Annuler</button>
+        <button class="primary" type="submit">Enregistrer</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="categoryModal">
+    <form method="dialog" class="modal-card" id="categoryForm">
+      <header>
+        <h2>Nouvelle categorie</h2>
+        <button type="button" class="icon" data-close="categoryModal">&times;</button>
+      </header>
+      <label>Nom de la categorie<input id="categoryName" required></label>
+      <label>Image categorie<input id="categoryImageFile" type="file" accept="image/*" capture="environment"></label>
+      <button type="button" id="categoryPhotoBtn">Prendre photo</button>
+      <img id="categoryImagePreview" class="image-preview" alt="">
+      <footer>
+        <button type="button" data-close="categoryModal">Annuler</button>
+        <button class="primary" type="submit">Creer</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="stockModal">
+    <form method="dialog" class="modal-card" id="stockForm">
+      <header>
+        <h2>Ajustement de stock</h2>
+        <button type="button" class="icon" data-close="stockModal">&times;</button>
+      </header>
+      <label>Produit<select id="stockProduct" required></select></label>
+      <label>Quantite (+ entree, - sortie)<input id="stockDelta" type="number" step="1" required></label>
+      <label>Motif<textarea id="stockReason" rows="3" required></textarea></label>
+      <footer>
+        <button type="button" data-close="stockModal">Annuler</button>
+        <button class="primary" type="submit">Ajuster</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="expenseModal">
+    <form method="dialog" class="modal-card" id="expenseForm">
+      <header>
+        <h2>Nouvelle depense</h2>
+        <button type="button" class="icon" data-close="expenseModal">&times;</button>
+      </header>
+      <label>Categorie<select id="expenseCategory" required></select></label>
+      <label>Description<input id="expenseDescription" required></label>
+      <label>Montant (FCFA)<input id="expenseAmount" type="number" min="0" step="1" required></label>
+      <label class="check"><input id="expenseCash" type="checkbox"> Payee depuis la caisse</label>
+      <footer>
+        <button type="button" data-close="expenseModal">Annuler</button>
+        <button class="primary" type="submit">Enregistrer</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="userModal">
+    <form method="dialog" class="modal-card" id="userForm">
+      <header>
+        <h2 id="userModalTitle">Utilisateur</h2>
+        <button type="button" class="icon" data-close="userModal">&times;</button>
+      </header>
+      <input type="hidden" id="userId">
+      <div class="grid-form">
+        <label>Identifiant<input id="userUsername" required></label>
+        <label>Nom complet<input id="userFullName" required></label>
+        <label>Role<select id="userRole" required></select></label>
+        <label>Mot de passe<input id="userPassword" type="password"></label>
+      </div>
+      <label class="check"><input id="userActive" type="checkbox" checked> Utilisateur actif</label>
+      <label class="check"><input id="userTwoFactor" type="checkbox"> Double authentification active</label>
+      <label class="check"><input id="userResetTwoFactor" type="checkbox"> Generer une nouvelle cle 2FA</label>
+      <footer>
+        <button type="button" data-close="userModal">Annuler</button>
+        <button class="primary" type="submit">Enregistrer</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="twoFactorSetupModal">
+    <div class="modal-card">
+      <header>
+        <h2>Configuration 2FA</h2>
+        <button type="button" class="icon" data-close="twoFactorSetupModal">&times;</button>
+      </header>
+      <p id="twoFactorSetupUser" class="status"></p>
+      <label>Cle a saisir dans l'application Authenticator<input id="twoFactorSecret" readonly></label>
+      <label>URI otpauth<textarea id="twoFactorUri" rows="3" readonly></textarea></label>
+      <footer>
+        <button type="button" id="copyTwoFactorSecretBtn">Copier la cle</button>
+        <button class="primary" type="button" data-close="twoFactorSetupModal">Terminer</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <dialog id="profileModal">
+    <form method="dialog" class="modal-card" id="profileForm">
+      <header>
+        <h2>Personnalisation du bar</h2>
+        <button type="button" class="icon" data-close="profileModal">&times;</button>
+      </header>
+      <div class="grid-form">
+        <label>Nom du bar<input id="profileName" required></label>
+        <label>Sigle<input id="profileSigle" required></label>
+        <label>Adresse<input id="profileAddress"></label>
+        <label>Contact<input id="profileContact"></label>
+        <label>Logo<input id="profileLogoFile" type="file" accept="image/*" capture="environment"></label>
+        <button type="button" id="profileLogoPhotoBtn">Photo logo</button>
+        <label>Image d'accueil<input id="profileCoverFile" type="file" accept="image/*" capture="environment"></label>
+        <button type="button" id="profileCoverPhotoBtn">Photo accueil</button>
+      </div>
+      <label>Pied du ticket<textarea id="profileTicketFooter" rows="3"></textarea></label>
+      <div class="preview-row">
+        <img id="profileLogoPreview" class="image-preview" alt="">
+        <img id="profileCoverPreview" class="image-preview wide" alt="">
+      </div>
+      <footer>
+        <button type="button" data-close="profileModal">Annuler</button>
+        <button class="primary" type="submit">Enregistrer</button>
+      </footer>
+    </form>
+  </dialog>
+
+  <dialog id="ticketModal">
+    <div class="modal-card ticket-card">
+      <header>
+        <h2>Ticket</h2>
+        <button type="button" class="icon" data-close="ticketModal">&times;</button>
+      </header>
+      <div id="ticketPreview" class="ticket-preview"></div>
+      <footer>
+        <button type="button" data-close="ticketModal">Fermer</button>
+        <button class="primary" id="printTicketBtn" type="button">Imprimer</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <dialog id="qrModal">
+    <div class="modal-card">
+      <header>
+        <h2>Scanner QR / code-barres</h2>
+        <button type="button" class="icon" data-close="qrModal">&times;</button>
+      </header>
+      <video id="qrVideo" class="qr-video" autoplay muted playsinline></video>
+      <label>Code scanne ou saisi<input id="qrManualInput"></label>
+      <p id="qrStatus" class="status">Camera en attente.</p>
+      <footer>
+        <button type="button" id="qrStopBtn">Arreter</button>
+        <button class="primary" id="qrUseBtn" type="button">Utiliser</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <dialog id="photoModal">
+    <div class="modal-card">
+      <header>
+        <h2 id="photoTitle">Prendre une photo</h2>
+        <button type="button" class="icon" data-close="photoModal">&times;</button>
+      </header>
+      <video id="photoVideo" class="camera-video" autoplay muted playsinline></video>
+      <canvas id="photoCanvas" hidden></canvas>
+      <p id="photoStatus" class="status">Camera en attente.</p>
+      <footer>
+        <button type="button" id="photoStopBtn">Arreter</button>
+        <button class="primary" id="photoCaptureBtn" type="button">Capturer</button>
+      </footer>
+    </div>
+  </dialog>
+
+  <script src="app.js?v=20260529-ui-pro"></script>
+</body>
+</html>

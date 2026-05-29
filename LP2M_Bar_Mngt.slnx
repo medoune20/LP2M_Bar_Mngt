@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/LP2M_Bar_Mngt.Application/LP2M_Bar_Mngt.Application.csproj" />
+    <Project Path="src/LP2M_Bar_Mngt.Domain/LP2M_Bar_Mngt.Domain.csproj" />
+    <Project Path="src/LP2M_Bar_Mngt.Infrastructure/LP2M_Bar_Mngt.Infrastructure.csproj" />
+    <Project Path="src/LP2M_Bar_Mngt.Presentation/LP2M_Bar_Mngt.Presentation.csproj" />
+    <Project Path="src/LP2M_Bar_Mngt.Web/LP2M_Bar_Mngt.Web.csproj" />
+    <Project Path="src/LP2M_Bar_Mngt.WinForms/LP2M_Bar_Mngt.WinForms.csproj" />
+  </Folder>
+</Solution>
