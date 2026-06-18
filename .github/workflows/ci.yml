@@ -1,0 +1,46 @@
+name: CI - GestionBarRestaurant
+
+# Compile et publie l'application à chaque push / pull request.
+# Sert aussi de vérification de compilation (build .NET 10 sur runner Linux).
+
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'GestionBarRestaurant/**'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    paths:
+      - 'GestionBarRestaurant/**'
+      - '.github/workflows/ci.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: GestionBarRestaurant
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Installer le SDK .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restaurer les dépendances
+        run: dotnet restore GestionBarRestaurant.sln
+
+      - name: Compiler (Release)
+        run: dotnet build GestionBarRestaurant.sln -c Release --no-restore
+
+      - name: Publier l'application web
+        run: dotnet publish Presentation/Presentation.csproj -c Release -o publish /p:UseAppHost=false
+
+      - name: Archiver le binaire publié
+        uses: actions/upload-artifact@v4
+        with:
+          name: gestionbar-publish
+          path: GestionBarRestaurant/publish
+          retention-days: 7

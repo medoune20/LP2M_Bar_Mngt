@@ -1,0 +1,20 @@
+# Compose de TEST LOCAL : application exposée directement, sans Caddy ni HTTPS.
+# Usage : depuis le dossier GestionBarRestaurant/
+#   docker compose -f docker-compose.local.yml up -d --build
+# Puis ouvrir http://localhost:8080  (superadmin / superadmin)
+#
+# Pour la mise en ligne réelle (HTTPS + domaine), utiliser docker-compose.yml.
+services:
+  app:
+    build: .
+    container_name: gestionbar-local
+    restart: unless-stopped
+    environment:
+      - DATA_DIR=/app/Data
+      - ASPNETCORE_ENVIRONMENT=Development
+      # Pas de PATH_BASE : l'application est servie à la racine http://localhost:8080
+    ports:
+      - "8080:8080"
+    volumes:
+      # La base SQLite locale est conservée entre deux lancements
+      - ./data:/app/Data

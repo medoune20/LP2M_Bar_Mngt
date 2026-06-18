@@ -2,6 +2,44 @@
 
 Ce guide permet de rendre l'application accessible via Internet (https://votre-domaine.com), avec HTTPS automatique et données persistantes.
 
+## Test local rapide (Docker, sans HTTPS)
+
+Pour lancer l'application sur votre poste, directement sur `http://localhost:8080` :
+
+```bash
+cd GestionBarRestaurant
+docker compose -f docker-compose.local.yml up -d --build
+```
+
+Ce fichier `docker-compose.local.yml` n'utilise ni Caddy ni `PATH_BASE` : l'app est
+servie à la racine. Pour la mise en ligne réelle (HTTPS + domaine), utilisez
+`docker-compose.yml` décrit plus bas.
+
+## Intégration et déploiement continus (GitHub Actions)
+
+Le dépôt contient deux workflows (dans `.github/workflows/`) :
+
+- **`ci.yml`** : à chaque push / pull request, compile la solution en .NET 10 sur un
+  runner Linux et publie le binaire en artefact. C'est aussi la vérification de
+  compilation de référence.
+- **`deploy.yml`** : à chaque push sur `main` (ou via « Run workflow »), se connecte
+  en SSH au serveur, met à jour le code (`git reset --hard origin/main`) et relance
+  `docker compose up -d --build`.
+
+Secrets à définir dans GitHub (*Settings → Secrets and variables → Actions*) pour le
+déploiement automatique :
+
+| Secret | Rôle | Exemple |
+|---|---|---|
+| `DEPLOY_HOST` | IP / domaine du serveur | `51.10.20.30` |
+| `DEPLOY_USER` | utilisateur SSH | `root` |
+| `DEPLOY_SSH_KEY` | clé privée SSH (contenu complet) | `-----BEGIN OPENSSH...` |
+| `DEPLOY_PORT` | port SSH (optionnel) | `22` |
+| `DEPLOY_PATH` | chemin du clone sur le serveur (optionnel) | `/opt/lp2m` |
+
+Prérequis côté serveur (une seule fois) : Docker installé et le dépôt cloné, p. ex.
+`git clone https://github.com/medoune20/LP2M_Bar_Mngt.git /opt/lp2m`.
+
 ## Architecture de déploiement
 
 Internet → Caddy (HTTPS automatique, ports 80/443) → Application ASP.NET Core (port interne 8080) → SQLite (volume persistant `./data`)
