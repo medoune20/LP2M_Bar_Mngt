@@ -394,10 +394,14 @@ CREATE TABLE IF NOT EXISTS ""MessagesChat"" (
     ""UtilisateurId"" INTEGER NOT NULL DEFAULT 0,
     ""AuteurNom"" TEXT NOT NULL DEFAULT '',
     ""AuteurRole"" INTEGER NOT NULL DEFAULT 0,
+    ""Canal"" TEXT NOT NULL DEFAULT 'general',
     ""Texte"" TEXT NOT NULL DEFAULT '',
     ""DateEnvoi"" TEXT NOT NULL
 );");
+        AjouterColonneSiAbsente(db, "MessagesChat", "Canal", "TEXT NOT NULL DEFAULT 'general'");
         db.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_MessagesChat_TenantId_DateEnvoi"" ON ""MessagesChat"" (""TenantId"", ""DateEnvoi"");");
+
+        AjouterColonneSiAbsente(db, "Utilisateurs", "DerniereLectureChatId", "INTEGER NOT NULL DEFAULT 0");
     }
 
     private static void AjouterColonneSiAbsente(AppDbContext db, string table, string colonne, string definition)

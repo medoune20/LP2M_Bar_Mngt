@@ -40,4 +40,7 @@ public class Utilisateur
     /// <summary>Protection contre les attaques par force brute.</summary>
     public int TentativesEchouees { get; set; }
     public DateTime? VerrouJusqua { get; set; }
+
+    /// <summary>Id du dernier message de la messagerie lu (badge de non-lus).</summary>
+    public int DerniereLectureChatId { get; set; }
 }

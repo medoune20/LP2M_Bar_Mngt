@@ -43,7 +43,7 @@
             <div class="collapse navbar-collapse" id="menuPrincipal">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item"><a class="nav-link" asp-controller="Accueil" asp-action="Index"><i class="bi bi-speedometer2 me-1"></i> Dashboard</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Chat" asp-action="Index"><i class="bi bi-chat-dots me-1"></i> Messagerie</a></li>
+                    <li class="nav-item"><a class="nav-link" asp-controller="Chat" asp-action="Index"><i class="bi bi-chat-dots me-1"></i> Messagerie <span class="js-chat-badge badge rounded-pill text-bg-danger ms-1" hidden>0</span></a></li>
                     @if (voir("caisse_rapide"))
                     {
                         <li class="nav-item"><a class="nav-link" asp-controller="Vente" asp-action="Rapide"><i class="bi bi-lightning-charge me-1"></i> Caisse rapide</a></li>
@@ -145,7 +145,7 @@
     <!-- Navigation mobile (téléphones / petites tablettes) -->
     <nav class="mobile-bottom-nav d-lg-none">
         <a asp-controller="Accueil" asp-action="Index"><i class="bi bi-speedometer2"></i><span>Accueil</span></a>
-        <a asp-controller="Chat" asp-action="Index"><i class="bi bi-chat-dots"></i><span>Chat</span></a>
+        <a asp-controller="Chat" asp-action="Index" class="position-relative"><i class="bi bi-chat-dots"></i><span>Chat</span><span class="js-chat-badge badge rounded-pill text-bg-danger position-absolute top-0 start-50" hidden>0</span></a>
         @if (voir("ventes"))
         {
             <a asp-controller="Vente" asp-action="Index"><i class="bi bi-receipt"></i><span>Ventes</span></a>
@@ -168,6 +168,31 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="~/js/site.js"></script>
+    @if (role > 0)
+    {
+        <script>
+            (function () {
+                const url = '@Url.Action("NonLus", "Chat")';
+                const badges = document.querySelectorAll('.js-chat-badge');
+                if (!badges.length) return;
+                function maj() {
+                    fetch(url, { headers: { 'Accept': 'application/json' } })
+                        .then(r => r.ok ? r.json() : null)
+                        .then(d => {
+                            if (!d) return;
+                            const n = Number(d.count) || 0;
+                            badges.forEach(b => {
+                                b.textContent = n > 99 ? '99+' : n;
+                                b.hidden = n === 0;
+                            });
+                        })
+                        .catch(() => { });
+                }
+                maj();
+                setInterval(maj, 15000);
+            })();
+        </script>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

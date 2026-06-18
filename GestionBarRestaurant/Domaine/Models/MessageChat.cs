@@ -23,6 +23,9 @@ public class MessageChat
     /// <summary>Rôle de l'auteur au moment de l'envoi (1=Admin, 2=Caissier, 3=Manager).</summary>
     public int AuteurRole { get; set; }
 
+    /// <summary>Salon / canal du message (« general », « encadrement », « caisse »…).</summary>
+    public string Canal { get; set; } = "general";
+
     [Required]
     [MaxLength(2000)]
     public string Texte { get; set; } = string.Empty;
