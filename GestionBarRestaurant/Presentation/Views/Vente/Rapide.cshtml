@@ -1,0 +1,543 @@
+@{
+    ViewData["Title"] = "Caisse rapide POS";
+    var produits = ViewBag.Produits as List<Produit> ?? new();
+    var clients = ViewBag.Clients as List<Client> ?? new();
+    var regle = ViewBag.RegleFidelite as RegleFidelite;
+    var caisseOuverte = ViewBag.CaisseOuverte as bool? ?? false;
+    var nomUtilisateur = Context.Session.GetString("UtilisateurNom") ?? "Vendeur";
+    var tenantNom = Context.Session.GetString("TenantNom") ?? "Bar Restaurant";
+    var caissesDispo = ViewBag.CaissesDispo as List<Domaine.Models.CaisseSession> ?? new();
+    var catsPOS = ViewBag.CategoriesPOS as List<string> ?? new();
+    var produitsAffiches = produits
+        .OrderBy(p => catsPOS.IndexOf(p.Categorie) < 0 ? 99 : catsPOS.IndexOf(p.Categorie))
+        .ThenBy(p => p.Nom)
+        .ToList();
+    var totalArticles = produitsAffiches.Count;
+}
+
+@section Styles {
+    <link href="~/css/pos-fluent-v32.css" rel="stylesheet" asp-append-version="true" />
+}
+
+@functions {
+    string ImageProduit(Produit p)
+    {
+        if (string.IsNullOrWhiteSpace(p.ImagePath)) return Url.Content("~/img/pos-products/boisson.png");
+        return p.ImagePath.StartsWith("/") ? Url.Content("~" + p.ImagePath) : p.ImagePath;
+    }
+
+    string FallbackImage(Produit p)
+    {
+        var txt = ((p.Nom ?? "") + " " + (p.Categorie ?? "")).ToLowerInvariant();
+        if (txt.Contains("poisson")) return Url.Content("~/img/pos-products/fish-chips.png");
+        if (txt.Contains("poulet") || txt.Contains("brochette")) return Url.Content("~/img/pos-products/grillade.png");
+        if (txt.Contains("frites")) return Url.Content("~/img/pos-products/fish-chips.png");
+        if (txt.Contains("cocktail") || txt.Contains("vin") || txt.Contains("champagne")) return Url.Content("~/img/pos-products/citronnade.png");
+        if (txt.Contains("whisky") || txt.Contains("gin") || txt.Contains("vodka") || txt.Contains("rhum") || txt.Contains("cognac")) return Url.Content("~/img/pos-products/boisson.png");
+        if (txt.Contains("chips") || txt.Contains("arachide") || txt.Contains("pop") || txt.Contains("alloco") || txt.Contains("attiéké")) return Url.Content("~/img/pos-products/plat-du-jour.png");
+        return Url.Content("~/img/pos-products/boisson.png");
+    }
+
+    string IconeCategorie(string categorie)
+    {
+        var c = (categorie ?? "").ToLowerInvariant();
+        if (c.Contains("bière") || c.Contains("biere")) return "bi-cup-straw";
+        if (c.Contains("spirit")) return "bi-gem";
+        if (c.Contains("vin") || c.Contains("cocktail")) return "bi-stars";
+        if (c.Contains("snack") || c.Contains("accompagnement")) return "bi-egg-fried";
+        return "bi-droplet";
+    }
+}
+
+<div class="gbpos32-shell">
+    <form asp-controller="Vente" asp-action="Rapide" method="post" id="formVenteRapide" class="gbpos32-form" onsubmit="return validerPanier(event)">
+        @Html.AntiForgeryToken()
+
+        <header class="gbpos32-hero">
+            <div class="gbpos32-brand">
+                <div class="gbpos32-brand-icon"><i class="bi bi-grid-1x2-fill"></i></div>
+                <div>
+                    <span class="gbpos32-kicker">Gestion Bar POS</span>
+                    <h1>Caisse rapide</h1>
+                    <p>@tenantNom · vendeur : <strong>@nomUtilisateur</strong></p>
+                </div>
+            </div>
+            <div class="gbpos32-statusbar">
+                <div class="gbpos32-status">
+                    <i class="bi bi-clock"></i>
+                    <div><strong id="posClock">--:--</strong><span id="posDate">--</span></div>
+                </div>
+                <div class="gbpos32-status @(caisseOuverte ? "is-open" : "is-warning")">
+                    <i class="bi @(caisseOuverte ? "bi-unlock" : "bi-lightning-charge")"></i>
+                    <div><strong>@(caisseOuverte ? "Caisse ouverte" : "Caisse auto")</strong><span>paiement actif</span></div>
+                </div>
+                <a asp-controller="Caisse" asp-action="Index" class="gbpos32-session-link"><i class="bi bi-cash-stack"></i><strong>Sessions</strong></a>
+            </div>
+        </header>
+
+        <section class="gbpos32-command" aria-label="Recherche et scan">
+            <div class="gbpos32-search">
+                <i class="bi bi-search"></i>
+                <input id="searchProduit" type="search" placeholder="Rechercher produit, catégorie ou code-barres" autocomplete="off" oninput="filtrerProduits()" />
+                <button type="button" onclick="viderRecherche()">Effacer</button>
+            </div>
+            <div class="gbpos32-scan">
+                <i class="bi bi-upc-scan"></i>
+                <input id="codeManuel" placeholder="Scanner / saisir code" autocomplete="off" />
+                <button type="button" onclick="chercherCodeManuel()">OK</button>
+            </div>
+        </section>
+
+        <section class="gbpos32-workspace">
+            <aside class="gbpos32-rail" aria-label="Catégories POS">
+                <button type="button" class="gbpos32-cat is-active" data-category="" onclick="filtrerCategorie(this)">
+                    <i class="bi bi-grid-fill"></i><span>Tous</span>
+                </button>
+                @foreach (var cat in catsPOS)
+                {
+                    <button type="button" class="gbpos32-cat" data-category="@cat.ToLowerInvariant()" onclick="filtrerCategorie(this)">
+                        <i class="bi @IconeCategorie(cat)"></i><span>@cat</span>
+                    </button>
+                }
+            </aside>
+
+            <main class="gbpos32-catalog">
+                <div class="gbpos32-catalog-head">
+                    <div>
+                        <span>Catalogue Abidjan</span>
+                        <strong><span id="nbProduitsVisibles">@totalArticles</span> produits disponibles</strong>
+                    </div>
+                    <div class="gbpos32-pages">
+                        <button type="button" onclick="pageProduits(-1)" aria-label="Page précédente"><i class="bi bi-chevron-left"></i></button>
+                        <span id="pageProduitsInfo">Page 1/1</span>
+                        <button type="button" onclick="pageProduits(1)" aria-label="Page suivante"><i class="bi bi-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <div class="gbpos32-products" id="grilleProduits">
+                    @foreach (var p in produitsAffiches)
+                    {
+                        var recherche = ((p.Nom ?? "") + " " + (p.Categorie ?? "") + " " + (p.CodeBarre ?? "")).ToLowerInvariant();
+                        <button type="button"
+                                class="gbpos32-product"
+                                data-id="@p.Id"
+                                data-nom="@p.Nom"
+                                data-prix="@p.PrixVente.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                data-stock="@p.StockActuel"
+                                data-categorie="@((p.Categorie ?? "").ToLowerInvariant())"
+                                data-search="@recherche"
+                                onclick="ajouterPanierDepuisBouton(this)">
+                            <span class="gbpos32-stock">Stock @p.StockActuel</span>
+                            <span class="gbpos32-imagebox">
+                                <img src="@ImageProduit(p)" alt="@p.Nom" loading="lazy" onerror="this.onerror=null;this.src='@FallbackImage(p)';" />
+                            </span>
+                            <span class="gbpos32-product-name">@p.Nom</span>
+                            <span class="gbpos32-product-cat">@p.Categorie</span>
+                            <span class="gbpos32-product-bottom"><span class="gbpos32-price">@String.Format("{0:N0}", p.PrixVente) FCFA</span><span class="gbpos32-add"><i class="bi bi-plus-lg"></i></span></span>
+                        </button>
+                    }
+                </div>
+
+                <div id="aucunProduit" class="gbpos32-empty d-none">
+                    <i class="bi bi-search"></i>
+                    <strong>Aucun produit trouvé</strong>
+                    <span>Essayez un autre mot-clé ou changez de catégorie.</span>
+                </div>
+            </main>
+
+            <aside class="gbpos32-ticket" id="ticketArea">
+                <div class="gbpos32-ticket-head">
+                    <div><span>Ticket en cours</span><strong><span id="ticketCount">0</span> article(s)</strong></div>
+                    <div class="gbpos32-ticket-actions">
+                        <button type="button" class="gbpos32-trash-btn" onclick="viderPanier()" title="Vider le panier"><i class="bi bi-trash3"></i></button>
+                        <button type="submit" id="btnValiderPaiement" class="gbpos32-checkout">
+                            <i class="bi bi-check2-circle"></i> Valider
+                        </button>
+                    </div>
+                </div>
+
+                <div class="gbpos32-cart-scroll">
+                    <div id="panierVide" class="gbpos32-cart-empty"><i class="bi bi-cart3"></i><strong>Ticket vide</strong><span>Touchez un produit pour l’ajouter.</span></div>
+                    <div id="lignesPanier"></div>
+                    <div id="hiddenInputs"></div>
+                </div>
+
+                @if (caissesDispo.Count > 1)
+                {
+                    <label class="gbpos32-field">
+                        <span>Caisse</span>
+                        <select name="caisseSessionId" id="caisseSessionId">
+                            @foreach (var ca in caissesDispo)
+                            {
+                                <option value="@ca.Id">@ca.Libelle - @ca.Caissier</option>
+                            }
+                        </select>
+                    </label>
+                }
+                else if (caissesDispo.Count == 1)
+                {
+                    <input type="hidden" name="caisseSessionId" value="@caissesDispo[0].Id" />
+                }
+
+                <div class="gbpos32-client">
+                    <label class="gbpos32-field">
+                        <span>Client</span>
+                        <select name="clientId" id="clientId" onchange="majInfosClient()">
+                            <option value="0" data-points="0">Client comptoir</option>
+                            @foreach (var c in clients)
+                            {
+                                <option value="@c.Id" data-points="@c.PointsFidelite">@c.Nom - @c.PointsFidelite pts</option>
+                            }
+                        </select>
+                    </label>
+                    <button type="button" class="gbpos32-icon-btn" onclick="ouvrirNouveauClient()" title="Nouveau client"><i class="bi bi-person-plus"></i></button>
+                </div>
+
+                <div class="gbpos32-summary">
+                    <div class="gbpos32-summary-row"><span>Sous-total</span><strong id="totalBrut">0 FCFA</strong></div>
+                    <div class="gbpos32-summary-row"><span>Remise fidélité</span><strong id="remiseFidelite">0 FCFA</strong></div>
+                    <div class="gbpos32-summary-row is-net"><span>Total à payer</span><strong id="totalNet">0 FCFA</strong></div>
+                </div>
+
+                <div class="gbpos32-payments">
+                    <input type="radio" class="btn-check" name="modePaiement" id="payCash" value="Espèces" checked onchange="majModePaiement()" />
+                    <label for="payCash"><i class="bi bi-cash-stack"></i><span>Espèces</span></label>
+                    <input type="radio" class="btn-check" name="modePaiement" id="payMobile" value="Mobile Money" onchange="majModePaiement()" />
+                    <label for="payMobile"><i class="bi bi-phone"></i><span>Mobile Money</span></label>
+                    <input type="radio" class="btn-check" name="modePaiement" id="payCard" value="Carte bancaire" onchange="majModePaiement()" />
+                    <label for="payCard"><i class="bi bi-credit-card"></i><span>Carte</span></label>
+                    <input type="radio" class="btn-check" name="modePaiement" id="payCredit" value="Crédit" onchange="majModePaiement()" />
+                    <label for="payCredit"><i class="bi bi-journal-text"></i><span>Crédit</span></label>
+                </div>
+
+                <label class="gbpos32-field gbpos32-reference d-none" id="referencePaiementZone">
+                    <span>Référence transaction</span>
+                    <input name="referencePaiement" id="referencePaiement" maxlength="80" placeholder="Ex : OM / Wave / TPE #..." />
+                </label>
+
+                <div class="gbpos32-cashbox">
+                    <label>
+                        <span>Montant encaissé</span>
+                        <input id="montantRecuVisible" type="text" inputmode="numeric" value="0" oninput="syncMontantVisible()" />
+                    </label>
+                    <div class="gbpos32-change"><span>Monnaie</span><strong id="monnaieRendue">0 FCFA</strong></div>
+                </div>
+
+                <div class="gbpos32-quickcash">
+                    <button type="button" onclick="paiementExact()">Exact</button>
+                    <button type="button" onclick="ajouterMontant(500)">+500</button>
+                    <button type="button" onclick="ajouterMontant(1000)">+1 000</button>
+                    <button type="button" onclick="ajouterMontant(2000)">+2 000</button>
+                    <button type="button" onclick="ajouterMontant(5000)">+5 000</button>
+                    <button type="button" onclick="resetMontant()">C</button>
+                </div>
+
+
+                <div class="gbpos32-hidden">
+                    <input name="remise" id="remise" type="number" min="0" value="0" />
+                    <input name="pointsFideliteUtilises" id="pointsFideliteUtilises" type="number" min="0" value="0" />
+                    <input name="montantRecu" id="montantRecu" type="number" min="0" value="0" />
+                    <span id="infosClientPoints">Points disponibles : 0</span>
+                    <strong id="totalNetSmall">0 FCFA</strong>
+                    <strong id="monnaieRendueVisible">0 FCFA</strong>
+                </div>
+            </aside>
+        </section>
+    </form>
+</div>
+
+<div class="modal fade" id="modalNouveauClient" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Nouveau client</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="mb-2"><label class="form-label">Nom du client</label><input id="ncNom" class="form-control" placeholder="Nom et prénom" /></div>
+                <div class="mb-1"><label class="form-label">Téléphone</label><input id="ncTel" class="form-control" inputmode="tel" placeholder="07 ..." /></div>
+                <div id="ncErreur" class="text-danger small mt-2 d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" onclick="enregistrerNouveauClient()">Créer et sélectionner</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+let panier = {};
+let categorieActive = '';
+let pageProduitsCourante = 1;
+let produitsParPage = 24;
+let dernierTotalNet = 0;
+let validationEnCours = false;
+const valeurPoint = @(regle?.ValeurPoint.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0");
+const seuilPoints = @(regle?.SeuilUtilisationPoints ?? 0);
+
+function fmt(v){ return new Intl.NumberFormat('fr-FR').format(Math.max(0, Math.round(Number(v) || 0))) + ' FCFA'; }
+function normaliser(v){ return String(v || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim(); }
+function montantDepuisTexte(v){ return parseFloat(String(v || '0').replace(/[^0-9,.-]/g,'').replace(',', '.')) || 0; }
+function afficherMontant(v){ return new Intl.NumberFormat('fr-FR').format(Math.max(0, Math.round(Number(v) || 0))); }
+function escapeHtml(value){ return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function nombreArticles(){ return Object.values(panier).reduce((s,x)=>s+x.qte,0); }
+
+function definirTaillePage(){
+    const w = window.innerWidth;
+    produitsParPage = w >= 1500 ? 30 : (w >= 1100 ? 24 : (w >= 768 ? 16 : 10));
+}
+
+function ouvrirNouveauClient(){
+    document.getElementById('ncNom').value = '';
+    document.getElementById('ncTel').value = '';
+    document.getElementById('ncErreur').classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('modalNouveauClient')).show();
+}
+
+async function enregistrerNouveauClient(){
+    const nom = document.getElementById('ncNom').value.trim();
+    const tel = document.getElementById('ncTel').value.trim();
+    const err = document.getElementById('ncErreur');
+    if (nom.length < 2){ err.textContent = 'Saisissez un nom valide.'; err.classList.remove('d-none'); return; }
+    const token = document.querySelector('#formVenteRapide input[name="__RequestVerificationToken"]')?.value || '';
+    const data = new FormData();
+    data.append('nom', nom);
+    data.append('telephone', tel);
+    data.append('__RequestVerificationToken', token);
+    try {
+        const rep = await fetch('@Url.Action("CreerClientRapide", "Vente")', { method: 'POST', body: data });
+        const res = await rep.json();
+        if (!res.ok){ err.textContent = res.message || 'Création impossible.'; err.classList.remove('d-none'); return; }
+        const sel = document.getElementById('clientId');
+        const opt = document.createElement('option');
+        opt.value = res.id;
+        opt.dataset.points = res.points ?? 0;
+        opt.textContent = res.nom + ' - ' + (res.points ?? 0) + ' pts';
+        sel.appendChild(opt);
+        sel.value = res.id;
+        majInfosClient();
+        bootstrap.Modal.getInstance(document.getElementById('modalNouveauClient')).hide();
+    } catch (e) {
+        err.textContent = 'Erreur réseau. Réessayez.';
+        err.classList.remove('d-none');
+    }
+}
+
+function ajouterPanierDepuisBouton(btn){
+    ajouterPanier(parseInt(btn.dataset.id), btn.dataset.nom || '', parseFloat(btn.dataset.prix || '0'), parseInt(btn.dataset.stock || '0'));
+    btn.classList.add('is-added');
+    setTimeout(() => btn.classList.remove('is-added'), 190);
+}
+
+function ajouterPanier(id, nom, prix, stock){
+    if(!panier[id]) panier[id] = { id, nom, prix, qte: 0, stock };
+    if(panier[id].qte >= stock){ alert('Stock maximum atteint pour ' + nom); return; }
+    panier[id].qte++;
+    afficherPanier();
+}
+
+function changerQte(id, delta){
+    if(!panier[id]) return;
+    panier[id].qte += delta;
+    if(panier[id].qte <= 0) delete panier[id];
+    if(panier[id] && panier[id].qte > panier[id].stock) panier[id].qte = panier[id].stock;
+    afficherPanier();
+}
+
+function supprimerLigne(id){ delete panier[id]; afficherPanier(); }
+function viderPanier(){ panier = {}; resetMontant(); afficherPanier(); }
+
+function afficherPanier(){
+    const zone = document.getElementById('lignesPanier');
+    const hidden = document.getElementById('hiddenInputs');
+    zone.innerHTML = '';
+    hidden.innerHTML = '';
+    const items = Object.values(panier);
+    document.getElementById('panierVide').style.display = items.length ? 'none' : 'flex';
+    document.getElementById('ticketCount').innerText = nombreArticles();
+
+    items.forEach(x => {
+        zone.innerHTML += `
+            <div class="gbpos32-cart-line">
+                <div class="gbpos32-cart-line-title"><strong>${escapeHtml(x.nom)}</strong><span>${fmt(x.prix)} · stock ${x.stock}</span></div>
+                <div class="gbpos32-cart-actions">
+                    <button type="button" onclick="changerQte(${x.id},-1)">−</button>
+                    <b>${x.qte}</b>
+                    <button type="button" onclick="changerQte(${x.id},1)">+</button>
+                    <strong class="gbpos32-line-total">${fmt(x.prix * x.qte)}</strong>
+                    <button type="button" class="is-danger" onclick="supprimerLigne(${x.id})"><i class="bi bi-x-lg"></i></button>
+                </div>
+            </div>`;
+        hidden.innerHTML += `<input type="hidden" name="produitIds" value="${x.id}" /><input type="hidden" name="quantites" value="${x.qte}" />`;
+    });
+    majTotaux();
+}
+
+function pointsDisponiblesClient(){
+    const sel = document.getElementById('clientId');
+    if(!sel || sel.selectedIndex < 0) return 0;
+    return parseInt(sel.options[sel.selectedIndex].dataset.points || '0');
+}
+
+function majInfosClient(){
+    const pts = pointsDisponiblesClient();
+    document.getElementById('infosClientPoints').innerText = 'Points disponibles : ' + pts;
+    majTotaux();
+}
+
+function modePaiement(){ return document.querySelector('input[name="modePaiement"]:checked')?.value || 'Espèces'; }
+
+function majModePaiement(){
+    const mode = modePaiement();
+    const refZone = document.getElementById('referencePaiementZone');
+    const refInput = document.getElementById('referencePaiement');
+    const exigeReference = mode === 'Mobile Money' || mode === 'Carte bancaire';
+    refZone.classList.toggle('d-none', !exigeReference);
+    refInput.required = exigeReference;
+    if(!exigeReference) refInput.value = '';
+    if(mode !== 'Espèces') paiementExact();
+    else majTotaux();
+}
+
+function majTotaux(){
+    const total = Object.values(panier).reduce((s,x)=>s+(x.prix*x.qte),0);
+    const remiseInput = document.getElementById('remise');
+    const pointsInput = document.getElementById('pointsFideliteUtilises');
+    const montantInput = document.getElementById('montantRecu');
+    let remise = parseFloat(remiseInput.value || '0');
+    let points = parseInt(pointsInput.value || '0');
+    const ptsDispo = pointsDisponiblesClient();
+
+    if(remise < 0) remise = 0;
+    if(remise > total) remise = total;
+    if(points < 0) points = 0;
+    if(points > ptsDispo) points = ptsDispo;
+
+    let remiseFidelite = points * valeurPoint;
+    if(points > 0 && points < seuilPoints) remiseFidelite = 0;
+    if(remiseFidelite > (total - remise)) remiseFidelite = total - remise;
+
+    dernierTotalNet = Math.max(0, total - remise - remiseFidelite);
+    const montantRecu = montantDepuisTexte(montantInput.value || '0');
+    const monnaie = Math.max(0, montantRecu - dernierTotalNet);
+
+    remiseInput.value = Math.round(remise);
+    pointsInput.value = points;
+    document.getElementById('totalBrut').innerText = fmt(total);
+    document.getElementById('totalNet').innerText = fmt(dernierTotalNet);
+    document.getElementById('totalNetSmall').innerText = fmt(dernierTotalNet);
+    document.getElementById('remiseFidelite').innerText = fmt(remiseFidelite);
+    document.getElementById('monnaieRendue').innerText = fmt(monnaie);
+    document.getElementById('monnaieRendueVisible').innerText = fmt(monnaie);
+    const visible = document.getElementById('montantRecuVisible');
+    if(visible && document.activeElement !== visible) visible.value = afficherMontant(montantRecu);
+    document.getElementById('btnValiderPaiement').disabled = Object.keys(panier).length === 0 || validationEnCours;
+}
+
+function syncMontantVisible(){
+    const visible = document.getElementById('montantRecuVisible');
+    document.getElementById('montantRecu').value = Math.round(montantDepuisTexte(visible.value));
+    majTotaux();
+}
+function paiementExact(){
+    document.getElementById('montantRecu').value = Math.round(dernierTotalNet);
+    document.getElementById('montantRecuVisible').value = afficherMontant(dernierTotalNet);
+    majTotaux();
+}
+function ajouterMontant(montant){
+    const input = document.getElementById('montantRecu');
+    input.value = Math.round(montantDepuisTexte(input.value) + montant);
+    document.getElementById('montantRecuVisible').value = afficherMontant(input.value);
+    majTotaux();
+}
+function resetMontant(){
+    document.getElementById('montantRecu').value = '0';
+    document.getElementById('montantRecuVisible').value = '0';
+    majTotaux();
+}
+
+function validerPanier(event){
+    if(validationEnCours) return false;
+    if(Object.values(panier).length === 0){ alert('Le panier est vide.'); return false; }
+    const paiement = modePaiement();
+    const montantRecu = montantDepuisTexte(document.getElementById('montantRecu').value || '0');
+    if(paiement === 'Espèces' && montantRecu < dernierTotalNet){ alert('Le montant encaissé est inférieur au total à payer.'); return false; }
+    if((paiement === 'Mobile Money' || paiement === 'Carte bancaire') && !document.getElementById('referencePaiement').value.trim()){
+        alert('Saisissez la référence de transaction avant de valider.');
+        document.getElementById('referencePaiement').focus();
+        return false;
+    }
+    if(paiement === 'Crédit'){
+        const sel = document.getElementById('clientId');
+        const nom = sel && sel.selectedIndex >= 0 ? normaliser(sel.options[sel.selectedIndex].text) : '';
+        if(!sel || !sel.value || sel.value === '0' || nom.includes('comptoir')){
+            alert('Une vente à crédit exige un client identifié.');
+            return false;
+        }
+    }
+    validationEnCours = true;
+    const btn = document.getElementById('btnValiderPaiement');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Validation...';
+    return true;
+}
+
+function cartesFiltrees(){
+    const q = normaliser(document.getElementById('searchProduit')?.value || '');
+    return Array.from(document.querySelectorAll('.gbpos32-product')).filter(card => {
+        const okRecherche = !q || normaliser(card.dataset.search).includes(q);
+        const okCategorie = !categorieActive || normaliser(card.dataset.categorie) === normaliser(categorieActive);
+        return okRecherche && okCategorie;
+    });
+}
+
+function filtrerProduits(resetPage = true){
+    if(resetPage) pageProduitsCourante = 1;
+    definirTaillePage();
+    const toutes = Array.from(document.querySelectorAll('.gbpos32-product'));
+    const filtrees = cartesFiltrees();
+    const totalPages = Math.max(1, Math.ceil(filtrees.length / produitsParPage));
+    if(pageProduitsCourante > totalPages) pageProduitsCourante = totalPages;
+    const debut = (pageProduitsCourante - 1) * produitsParPage;
+    const fin = debut + produitsParPage;
+    toutes.forEach(card => card.style.display = 'none');
+    filtrees.slice(debut, fin).forEach(card => card.style.display = 'grid');
+    document.getElementById('aucunProduit').classList.toggle('d-none', filtrees.length !== 0);
+    document.getElementById('nbProduitsVisibles').innerText = filtrees.length;
+    document.getElementById('pageProduitsInfo').innerText = 'Page ' + pageProduitsCourante + '/' + totalPages;
+}
+
+function filtrerCategorie(btn){
+    document.querySelectorAll('.gbpos32-cat').forEach(x => x.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    categorieActive = btn.dataset.category || '';
+    filtrerProduits(true);
+}
+function pageProduits(direction){
+    definirTaillePage();
+    const totalPages = Math.max(1, Math.ceil(cartesFiltrees().length / produitsParPage));
+    pageProduitsCourante = Math.min(totalPages, Math.max(1, pageProduitsCourante + direction));
+    filtrerProduits(false);
+}
+function viderRecherche(){ document.getElementById('searchProduit').value = ''; filtrerProduits(true); }
+
+function chercherCodeManuel(){ const code = document.getElementById('codeManuel').value.trim(); if(code) chercherProduitParCode(code); }
+function chercherProduitParCode(code){
+    fetch('@Url.Action("Lookup", "Produit")?code=' + encodeURIComponent(code))
+        .then(r => r.json())
+        .then(p => { if(!p.found){ alert('Produit introuvable pour ce code.'); return; } ajouterPanier(p.id, p.nom, parseFloat(p.prix), parseInt(p.stock)); document.getElementById('codeManuel').value = ''; })
+        .catch(() => alert('Impossible de rechercher le produit.'));
+}
+
+function majHorloge(){
+    const now = new Date();
+    document.getElementById('posClock').innerText = now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+    document.getElementById('posDate').innerText = now.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    majInfosClient(); afficherPanier(); filtrerProduits(true); majModePaiement(); majHorloge(); setInterval(majHorloge, 30000);
+    document.getElementById('codeManuel').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); chercherCodeManuel(); } });
+    window.addEventListener('resize', function(){ filtrerProduits(false); });
+});
+</script>
+}

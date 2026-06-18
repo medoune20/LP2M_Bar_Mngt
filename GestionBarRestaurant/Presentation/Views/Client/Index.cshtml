@@ -1,0 +1,94 @@
+@model List<Client>
+@{
+    ViewData["Title"] = "Clients";
+}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="fw-bold mb-1">Clients</h1>
+        <p class="text-muted mb-0">Gestion des clients, achats cumulés et points fidélité.</p>
+    </div>
+    <a asp-action="Nouveau" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Ajouter</a>
+</div>
+
+<form method="get" class="card mb-4">
+    <div class="card-body row g-2">
+        <div class="col-md-10"><input name="recherche" value="@ViewBag.Recherche" class="form-control" placeholder="Rechercher nom, téléphone, email..." /></div>
+        <div class="col-md-2 d-grid"><button class="btn btn-outline-primary">Rechercher</button></div>
+    </div>
+</form>
+
+<form asp-action="MiseAJourMasse" method="post" class="card">
+    @Html.AntiForgeryToken()
+    <div class="card-body">
+        <div class="row g-2 align-items-end mb-3">
+            <div class="col-md-3"><label class="form-label">Type client</label><select name="typeClient" class="form-select"><option value="">Ne pas changer</option><option value="Particulier">Particulier</option><option value="Entreprise">Entreprise</option><option value="VIP">VIP</option></select></div>
+            <div class="col-md-3"><label class="form-label">Action</label><select name="actionMasse" class="form-select"><option value="">Aucune</option><option value="activer">Activer</option><option value="desactiver">Désactiver</option></select></div>
+            <div class="col-md-3 d-grid"><button class="btn btn-warning">Mise à jour masse</button></div>
+        </div>
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead><tr><th><input type="checkbox" onclick="document.querySelectorAll('.chk-client').forEach(c=>c.checked=this.checked)" /></th><th>Nom</th><th>Téléphone</th><th>Email</th><th>Type</th><th class="text-end">Points</th><th class="text-end">Encours crédit</th><th class="text-end">Achats cumulés</th><th>Dernière visite</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
+                <tbody>
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td><input class="chk-client" type="checkbox" name="ids" value="@c.Id" /></td>
+                        <td class="fw-semibold">@c.Nom</td><td>@c.Telephone</td><td>@c.Email</td><td>@c.TypeClient</td>
+                        <td class="text-end"><span class="badge bg-primary">@c.PointsFidelite</span></td>
+                        <td class="text-end @(c.SoldeCredit > 0 ? "text-danger fw-semibold" : "")">@String.Format("{0:N0} FCFA", c.SoldeCredit)</td>
+                        <td class="text-end">@String.Format("{0:N0} FCFA", c.TotalAchats)</td>
+                        <td>@(c.DerniereVisite.HasValue ? c.DerniereVisite.Value.ToString("dd/MM/yyyy") : "-")</td>
+                        <td><span class="badge @(c.Actif ? "bg-success" : "bg-secondary")">@(c.Actif ? "Actif" : "Inactif")</span></td>
+                        <td class="text-end">
+                            <a asp-action="Modifier" asp-route-id="@c.Id" class="btn btn-sm btn-outline-primary">Modifier</a>
+                            @if (c.SoldeCredit > 0)
+                            {
+                                <button type="button" class="btn btn-sm btn-outline-success" onclick="ouvrirReglement(@c.Id, '@c.Nom.Replace("'", " ")', @((long)c.SoldeCredit))">Régler crédit</button>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</form>
+
+
+<!-- Modal règlement de créance -->
+<div class="modal fade" id="modalReglement" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="ReglerCredit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" id="regClientId" />
+                <div class="modal-header"><h5 class="modal-title">Règlement de créance</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <div class="mb-2">Client : <strong id="regClientNom"></strong></div>
+                    <div class="mb-3">Encours : <strong id="regEncours"></strong> FCFA</div>
+                    <div class="mb-3"><label class="form-label">Montant du règlement</label><input name="montant" id="regMontant" type="number" min="1" step="1" class="form-control" required /></div>
+                    <div class="mb-2"><label class="form-label">Mode de paiement</label>
+                        <select name="modePaiement" class="form-select">
+                            <option value="Espèces">Espèces</option>
+                            <option value="Mobile Money">Mobile Money</option>
+                            <option value="Carte bancaire">Carte bancaire</option>
+                        </select>
+                    </div>
+                    <div class="text-muted small">L'encaissement est journalisé dans la session de caisse ouverte.</div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button><button class="btn btn-success">Encaisser</button></div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+function ouvrirReglement(id, nom, encours) {
+    document.getElementById('regClientId').value = id;
+    document.getElementById('regClientNom').textContent = nom;
+    document.getElementById('regEncours').textContent = encours.toLocaleString('fr-FR');
+    const m = document.getElementById('regMontant');
+    m.value = encours;
+    m.max = encours;
+    new bootstrap.Modal(document.getElementById('modalReglement')).show();
+}
+</script>

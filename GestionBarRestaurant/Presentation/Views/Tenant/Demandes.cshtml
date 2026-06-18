@@ -1,0 +1,44 @@
+@model List<Domaine.Models.Utilisateur>
+@{
+    ViewData["Title"] = "Demandes d'inscription";
+    var tenants = (ViewBag.Tenants as List<Domaine.Models.Tenant> ?? new()).ToDictionary(t => t.Id, t => t);
+}
+<h1 class="fw-bold mb-4">Demandes d'inscription</h1>
+
+<div class="card"><div class="card-body table-responsive">
+    @if (!Model.Any())
+    {
+        <p class="text-muted mb-0">Aucune demande en attente.</p>
+    }
+    else
+    {
+        <table class="table align-middle">
+            <thead><tr><th>Établissement</th><th>Demandeur</th><th>Email</th><th>Email confirmé</th><th>Date</th><th class="text-end">Action</th></tr></thead>
+            <tbody>
+            @foreach (var u in Model)
+            {
+                var t = tenants.TryGetValue(u.TenantId, out var tn) ? tn : null;
+                <tr>
+                    <td><strong>@(t?.Nom ?? "-")</strong><div class="text-muted small">@(t?.Ville)</div></td>
+                    <td>@u.Nom<div class="text-muted small">@u.Login</div></td>
+                    <td>@u.Email</td>
+                    <td>@(u.EmailConfirme ? Html.Raw("<span class='badge bg-success'>Oui</span>") : Html.Raw("<span class='badge bg-warning text-dark'>En attente</span>"))</td>
+                    <td>@(u.DateInscription?.ToString("dd/MM/yyyy HH:mm"))</td>
+                    <td class="text-end">
+                        <form asp-action="ActiverDemande" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="utilisateurId" value="@u.Id" />
+                            <button class="btn btn-sm btn-success">Activer</button>
+                        </form>
+                        <form asp-action="RejeterDemande" method="post" class="d-inline" onsubmit="return confirm('Rejeter et supprimer cette demande ?')">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="utilisateurId" value="@u.Id" />
+                            <button class="btn btn-sm btn-outline-danger">Rejeter</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div></div>

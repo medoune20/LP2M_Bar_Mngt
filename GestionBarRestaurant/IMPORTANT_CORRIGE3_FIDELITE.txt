@@ -1,0 +1,20 @@
+CORRIGE3 - MODULE FIDELITE
+
+Cette version corrige l'erreur :
+The input string '0.0' was not in a correct format.
+
+Cause :
+Une ancienne base SQLite contenait des montants décimaux stockés en texte.
+
+Correction :
+Cette version utilise une nouvelle base :
+Presentation\Data\gestionbar_analytics_v3.db
+
+Après extraction, lancez :
+cd C:\DEV\GestionBarRestaurant_NET10_SQLite_Pro_Analytics_CORRIGE3\Presentation
+dotnet clean
+dotnet restore
+dotnet run
+
+Si vous voulez nettoyer toutes les anciennes bases, lancez :
+Reset_All_SQLite_GestionBar.ps1

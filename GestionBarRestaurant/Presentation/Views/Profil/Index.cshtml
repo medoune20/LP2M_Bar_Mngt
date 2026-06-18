@@ -1,0 +1,51 @@
+@model List<Domaine.Models.ProfilAcces>
+@{
+    ViewData["Title"] = "Profils / rôles";
+    var compteurs = ViewBag.Compteurs as Dictionary<int, int> ?? new();
+}
+<h1 class="fw-bold mb-4">Profils / rôles</h1>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card"><div class="card-body">
+            <h5 class="fw-bold mb-3">Nouveau profil</h5>
+            <form asp-action="Creer" method="post">
+                @Html.AntiForgeryToken()
+                <div class="mb-3"><label class="form-label">Nom du profil</label><input name="nom" class="form-control" placeholder="Serveur, Gérant, Stockiste..." required /></div>
+                <button class="btn btn-primary w-100">Créer et configurer</button>
+            </form>
+            <p class="text-muted small mt-3 mb-0">Un profil définit, par module, le droit de <strong>consulter</strong> ou de <strong>modifier</strong>. On l'affecte ensuite à un ou plusieurs utilisateurs.</p>
+        </div></div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card"><div class="card-body">
+            <h5 class="fw-bold mb-3">@Model.Count profil(s) / rôle(s)</h5>
+            @if (!Model.Any())
+            {
+                <p class="text-muted mb-0">Aucun profil. Créez-en un pour accorder des droits sur mesure.</p>
+            }
+            else
+            {
+                foreach (var p in Model)
+                {
+                    var nb = compteurs.TryGetValue(p.Id, out var n) ? n : 0;
+                    <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                        <div>
+                            <strong>@p.Nom</strong>
+                            @if (!p.Actif) { <span class="badge bg-secondary ms-1">inactif</span> }
+                            <div class="text-muted small">@(string.IsNullOrEmpty(p.Permissions) ? "Aucun droit défini" : p.Permissions.Replace(";", " · ")) — @nb utilisateur(s)</div>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a asp-action="Modifier" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Configurer</a>
+                            <form asp-action="Supprimer" method="post" onsubmit="return confirm('Supprimer ce profil ?')">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@p.Id" />
+                                <button class="btn btn-sm btn-outline-danger">Supprimer</button>
+                            </form>
+                        </div>
+                    </div>
+                }
+            }
+        </div></div>
+    </div>
+</div>

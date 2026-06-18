@@ -1,0 +1,12 @@
+IMPORTANT
+
+Cette version ajoute de nouvelles tables :
+- ReglesFidelite
+- MouvementsFidelite
+
+Elle ajoute aussi des colonnes à Clients et Ventes.
+
+Si vous avez déjà lancé une ancienne version SQLite, supprimez :
+Presentation\Data\gestionbar.db
+
+Au prochain lancement, l'application recréera automatiquement la base avec le nouveau schéma.

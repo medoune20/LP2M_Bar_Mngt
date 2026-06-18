@@ -1,0 +1,31 @@
+@model Depense
+@{
+    ViewData["Title"] = "Modifier dépense";
+}
+<h1 class="fw-bold mb-4">Modifier dépense</h1>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            @Html.AntiForgeryToken()
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <strong>Impossible d'enregistrer :</strong>
+                    <div asp-validation-summary="All" class="mb-0"></div>
+                </div>
+            }
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="TenantId" />
+            <div class="row g-3">
+                <div class="col-md-6"><label asp-for="Libelle" class="form-label"></label><input asp-for="Libelle" class="form-control" /><span asp-validation-for="Libelle" class="text-danger"></span></div>
+                <div class="col-md-3"><label asp-for="Categorie" class="form-label"></label><input asp-for="Categorie" class="form-control" /></div>
+                <div class="col-md-3"><label asp-for="Montant" class="form-label"></label><input asp-for="Montant" type="number" step="1" class="form-control" /><span asp-validation-for="Montant" class="text-danger"></span></div>
+                <div class="col-md-4"><label asp-for="DateDepense" class="form-label">Date</label><input asp-for="DateDepense" type="datetime-local" class="form-control" /></div>
+                <div class="col-md-8"><label asp-for="Beneficiaire" class="form-label"></label><input asp-for="Beneficiaire" class="form-control" /></div>
+                <div class="col-12"><label asp-for="Commentaire" class="form-label"></label><textarea asp-for="Commentaire" class="form-control"></textarea></div>
+            </div>
+            <div class="mt-4"><button class="btn btn-primary">Enregistrer</button><a asp-action="Index" class="btn btn-outline-secondary">Annuler</a></div>
+        </form>
+    </div>
+</div>

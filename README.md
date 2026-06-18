@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # LP2M_Bar_Mngt
 
 Application standalone de gestion de bar / restaurant en C#, ASP.NET Core, Windows Forms, WPF et SQLite.
@@ -164,6 +163,37 @@ Fonctions avancees disponibles dans la version web :
 - images pour les produits et les categories ;
 - en-tetes web de base pour reduire les risques de contenu injecte et d'integration externe non souhaitee.
 - double authentification TOTP par utilisateur avec generation/reinitialisation de cle 2FA.
-=======
-# LP2M_Bar_Mngt
->>>>>>> 2a421f799cf67ef62ebe970f7fbdf4d6ab6cc039
+
+## Application multi-tenant GestionBarRestaurant (V3.3+)
+
+En complement de l'application historique ci-dessus (projets `src/`), le depot
+contient desormais l'application **GestionBarRestaurant** (ASP.NET Core MVC,
+.NET 10, EF Core SQLite, multi-tenant) dans le dossier `GestionBarRestaurant/`.
+
+Chaque etablissement (tenant) dispose de son propre catalogue, de ses
+utilisateurs, de sa caisse et de ses rapports, avec un cloisonnement strict par
+`TenantId`.
+
+### Messagerie temps reel par etablissement
+
+Une messagerie interne en direct a ete ajoutee : les utilisateurs d'un meme
+tenant (Administrateur, Manager, Caissier) peuvent echanger en live.
+
+- Transport temps reel via **SignalR** (`/hubChat`).
+- Cloisonnement par groupe SignalR `tenant-{TenantId}` : aucun message n'est
+  visible en dehors de son etablissement.
+- Historique persiste (table `MessagesChat`) et recharge a l'ouverture de la page.
+- Protection XSS : le texte est rendu via `textContent` cote client.
+- Acces : entree « Messagerie » dans le menu, controleur `ChatController`,
+  vue `Views/Chat/Index.cshtml`.
+
+### Lancement
+
+```powershell
+cd GestionBarRestaurant
+dotnet run --project Presentation/Presentation.csproj --urls http://localhost:5057
+```
+
+Sonde de disponibilite : `http://localhost:5057/health`.
+
+Compte super administrateur initial : `superadmin` / `superadmin`.

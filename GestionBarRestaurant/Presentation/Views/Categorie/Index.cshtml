@@ -1,0 +1,61 @@
+@model List<Categorie>
+@{
+    ViewData["Title"] = "Catégories de produits";
+    var comptes = ViewBag.Comptes as Dictionary<string, int> ?? new();
+}
+<h1 class="fw-bold mb-4">Catégories de produits</h1>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">Nouvelle catégorie</h5>
+                <form asp-action="Creer" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3"><label class="form-label">Nom</label><input name="Nom" class="form-control" required /></div>
+                    <div class="row g-2">
+                        <div class="col-7 mb-3"><label class="form-label">Ordre</label><input name="Ordre" type="number" value="0" class="form-control" /></div>
+                        <div class="col-5 mb-3"><label class="form-label">Couleur</label><input name="Couleur" type="color" value="#165DFF" class="form-control form-control-color" /></div>
+                    </div>
+                    <input type="hidden" name="Actif" value="true" />
+                    <button class="btn btn-primary w-100">Ajouter</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">@Model.Count catégorie(s)</h5>
+                @if (!Model.Any())
+                {
+                    <p class="text-muted mb-0">Aucune catégorie. Créez-en une pour organiser vos produits.</p>
+                }
+                else
+                {
+                    foreach (var c in Model)
+                    {
+                        var nb = comptes.TryGetValue(c.Nom, out var n) ? n : 0;
+                        <div class="d-flex align-items-center gap-2 py-2 border-bottom flex-wrap">
+                            <form asp-action="Modifier" method="post" class="d-flex align-items-center gap-2 flex-grow-1 flex-wrap">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="Id" value="@c.Id" />
+                                <input name="Ordre" type="number" value="@c.Ordre" class="form-control form-control-sm" style="width:70px" title="Ordre" />
+                                <input name="Couleur" type="color" value="@c.Couleur" class="form-control form-control-color form-control-sm" style="width:40px" title="Couleur" />
+                                <input name="Nom" value="@c.Nom" class="form-control form-control-sm" style="min-width:140px;flex:1" />
+                                <span class="badge bg-secondary" title="Produits">@nb produit(s)</span>
+                                <div class="form-check m-0"><input name="Actif" type="checkbox" value="true" class="form-check-input" @(c.Actif ? "checked" : "") /><input type="hidden" name="Actif" value="false" /><label class="form-check-label small">Actif</label></div>
+                                <button class="btn btn-sm btn-outline-primary">Enregistrer</button>
+                            </form>
+                            <form asp-action="Supprimer" method="post" onsubmit="return confirm('Supprimer cette catégorie ?')">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@c.Id" />
+                                <button class="btn btn-sm btn-outline-danger">Supprimer</button>
+                            </form>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>

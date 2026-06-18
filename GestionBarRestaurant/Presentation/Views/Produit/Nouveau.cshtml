@@ -1,0 +1,58 @@
+@model Produit
+@{
+    ViewData["Title"] = "Nouveau produit";
+}
+<h1 class="fw-bold mb-4">Nouveau produit</h1>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="Id" />
+            <input type="hidden" asp-for="TenantId" />
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <strong>Impossible d'enregistrer :</strong>
+                    <div asp-validation-summary="All" class="mb-0"></div>
+                </div>
+            }
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="Nom" class="form-label"></label>
+                    <input asp-for="Nom" class="form-control" />
+                    <span asp-validation-for="Nom" class="text-danger"></span>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="Categorie" class="form-label"></label>
+                    <input asp-for="Categorie" class="form-control" list="listeCategories" placeholder="Boissons, Restauration..." />
+                    <datalist id="listeCategories">
+                        @foreach (var cat in (ViewBag.Categories as List<string> ?? new()))
+                        {
+                            <option value="@cat"></option>
+                        }
+                    </datalist>
+                    <span asp-validation-for="Categorie" class="text-danger"></span>
+                </div>
+                <div class="col-md-3"><label asp-for="PrixAchat" class="form-label"></label><input asp-for="PrixAchat" class="form-control" type="number" step="1" /></div>
+                <div class="col-md-3"><label asp-for="PrixVente" class="form-label"></label><input asp-for="PrixVente" class="form-control" type="number" step="1" /></div>
+                <div class="col-md-3"><label asp-for="StockActuel" class="form-label"></label><input asp-for="StockActuel" class="form-control" type="number" /></div>
+                <div class="col-md-3"><label asp-for="StockMinimum" class="form-label"></label><input asp-for="StockMinimum" class="form-control" type="number" /></div>
+                <div class="col-md-6"><label asp-for="CodeBarre" class="form-label"></label><input asp-for="CodeBarre" class="form-control" placeholder="Automatique si vide" /></div>
+                <div class="col-md-6"><label class="form-label">Image produit</label><input type="file" name="image" accept="image/jpeg,image/png,image/webp" class="form-control" /><span class="text-danger">@ViewData.ModelState["image"]?.Errors.FirstOrDefault()?.ErrorMessage</span></div>
+                @if (!string.IsNullOrWhiteSpace(Model.ImagePath))
+                {
+                    <div class="col-md-3"><img src="@(Model.ImagePath.StartsWith("/") ? Url.Content("~" + Model.ImagePath) : Model.ImagePath)" class="product-preview" /></div>
+                }
+                <div class="col-md-12 form-check ms-2">
+                    <input asp-for="Actif" class="form-check-input" />
+                    <label asp-for="Actif" class="form-check-label">Produit actif</label>
+                </div>
+            </div>
+            <div class="mt-4">
+                <button class="btn btn-primary">Enregistrer</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Annuler</a>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,91 @@
+@model List<Produit>
+@{
+    ViewData["Title"] = "Produits";
+    var categories = ViewBag.Categories as List<string> ?? new();
+}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h1 class="fw-bold mb-1">Produits</h1>
+        <p class="text-muted mb-0">Catalogue avec images, QR codes et mise à jour en masse.</p>
+    </div>
+    <a asp-action="Nouveau" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Ajouter</a>
+    <a asp-action="Importer" class="btn btn-outline-primary"><i class="bi bi-upload me-1"></i> Importer un catalogue</a>
+</div>
+
+<form method="get" class="card mb-4">
+    <div class="card-body row g-2">
+        <div class="col-md-6"><input name="recherche" value="@ViewBag.Recherche" class="form-control" placeholder="Rechercher nom, catégorie ou code-barres..." /></div>
+        <div class="col-md-4">
+            <select name="categorie" class="form-select">
+                <option value="">Toutes catégories</option>
+                @foreach (var c in categories)
+                {
+                    <option value="@c" selected="@(ViewBag.Categorie == c)">@c</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2 d-grid"><button class="btn btn-outline-primary">Rechercher</button></div>
+    </div>
+</form>
+
+<form asp-action="MiseAJourMasse" method="post" class="card mb-4">
+    @Html.AntiForgeryToken()
+    <div class="card-body">
+        <h5 class="fw-bold mb-3"><i class="bi bi-check2-square me-1"></i> Mise à jour multiple / masse</h5>
+        <div class="row g-2 align-items-end">
+            <div class="col-md-2"><label class="form-label">Prix vente</label><input name="prixVente" type="number" min="0" step="1" class="form-control" /></div>
+            <div class="col-md-2"><label class="form-label">Stock minimum</label><input name="stockMinimum" type="number" min="0" class="form-control" /></div>
+            <div class="col-md-3"><label class="form-label">Catégorie</label><input name="categorie" class="form-control" /></div>
+            <div class="col-md-2"><label class="form-label">Action</label><select name="actionMasse" class="form-select"><option value="">Aucune</option><option value="activer">Activer</option><option value="desactiver">Désactiver</option></select></div>
+            <div class="col-md-3 d-grid"><button class="btn btn-warning">Appliquer aux produits cochés</button></div>
+        </div>
+
+        <div class="table-responsive mt-4">
+            <table class="table align-middle">
+                <thead><tr><th><input type="checkbox" onclick="document.querySelectorAll('.chk-produit').forEach(c=>c.checked=this.checked)" /></th><th>Image</th><th>Produit</th><th>Catégorie</th><th>QR</th><th class="text-end">Prix</th><th class="text-center">Stock</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
+                <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td><input class="chk-produit" type="checkbox" name="ids" value="@p.Id" /></td>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(p.ImagePath))
+                            {
+                                <img src="@(p.ImagePath.StartsWith("/") ? Url.Content("~" + p.ImagePath) : p.ImagePath)" class="product-thumb" />
+                            }
+                            else
+                            {
+                                <div class="product-thumb product-placeholder"><i class="bi bi-image"></i></div>
+                            }
+                        </td>
+                        <td class="fw-semibold">
+                            @p.Nom
+                            <div class="small text-muted">@p.CodeBarre</div>
+                        </td>
+                        <td>@p.Categorie</td>
+                        <td><div class="qr-mini" data-qr="@p.QrValue"></div></td>
+                        <td class="text-end">@String.Format("{0:N0} FCFA", p.PrixVente)</td>
+                        <td class="text-center">
+                            <span class="badge @(p.StockActuel <= p.StockMinimum ? "bg-danger" : "bg-success")">@p.StockActuel</span>
+                        </td>
+                        <td>@(p.Actif ? "Actif" : "Inactif")</td>
+                        <td class="text-end">
+                            <a asp-action="Modifier" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Modifier</a>
+                            <form asp-action="Supprimer" asp-route-id="@p.Id" method="post" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Désactiver ce produit ?')">Désactiver</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+<script>
+initQrCodes();
+</script>
+}

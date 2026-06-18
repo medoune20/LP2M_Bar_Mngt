@@ -1,0 +1,30 @@
+@model Tenant
+@{
+    ViewData["Title"] = "Nouveau tenant";
+}
+<h1 class="fw-bold mb-4">Nouveau tenant</h1>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <strong>Impossible d'enregistrer :</strong>
+                    <div asp-validation-summary="All" class="mb-0"></div>
+                </div>
+            }
+            <input type="hidden" asp-for="Id" />
+            <div class="row g-3">
+                <div class="col-md-6"><label asp-for="Nom" class="form-label"></label><input asp-for="Nom" class="form-control" /><span asp-validation-for="Nom" class="text-danger"></span></div>
+                <div class="col-md-3"><label asp-for="Code" class="form-label"></label><input asp-for="Code" class="form-control" /><span asp-validation-for="Code" class="text-danger"></span></div>
+                <div class="col-md-3"><label asp-for="CouleurPrincipale" class="form-label">Couleur</label><input asp-for="CouleurPrincipale" type="color" class="form-control form-control-color" /></div>
+                <div class="col-md-6"><label asp-for="Telephone" class="form-label"></label><input asp-for="Telephone" class="form-control" /></div>
+                <div class="col-md-6"><label asp-for="Adresse" class="form-label"></label><input asp-for="Adresse" class="form-control" /></div>
+                <div class="col-12 form-check ms-2"><input asp-for="Actif" class="form-check-input" /><label asp-for="Actif" class="form-check-label">Actif</label></div>
+            </div>
+            <div class="mt-4"><button class="btn btn-primary">Enregistrer</button><a asp-action="Index" class="btn btn-outline-secondary">Annuler</a></div>
+        </form>
+    </div>
+</div>

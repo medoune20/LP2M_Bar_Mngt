@@ -1,0 +1,32 @@
+Nom;Categorie;PrixAchat;PrixVente;StockActuel;StockMinimum
+Guinness;Bières;700;1000;48;12
+Guinness Gold (CDG);Bières;1000;1500;36;10
+Castel;Bières;500;700;48;12
+Castel Kit;Bières;500;700;24;6
+Beaufort;Bières;700;1000;48;12
+Bock;Bières;550;800;48;12
+Bock Kit;Bières;700;1000;24;6
+Despérados;Bières;500;700;36;10
+Despérados Kit;Bières;700;1000;24;6
+Despérados Knet;Bières;700;1000;24;6
+Despérados Knet Kit;Bières;1200;1800;24;6
+Heineken;Bières;500;700;36;10
+Heineken Kit;Bières;1200;1800;24;6
+Heineken Knet Kit;Bières;3500;5000;12;4
+Budweiser;Bières;700;1000;24;6
+Doppel Energy;Bières;700;1000;24;6
+Sombitter;Bières;550;800;24;6
+Tournée;Bières;550;800;24;6
+Chill;Bières;1000;1500;24;6
+Sucrerie;Sucreries;300;500;48;12
+Coca-Cola;Sucreries;450;700;36;10
+Orangina;Sucreries;600;1000;24;6
+Schweppes;Sucreries;450;700;24;6
+Bouteille d'eau;Sucreries;300;500;48;12
+Vin (bouteille);Vins & Spiritueux;5000;8000;12;4
+Volpierre;Vins & Spiritueux;500;700;24;6
+Ricard;Vins & Spiritueux;1300;2000;12;4
+Sir Edwards;Vins & Spiritueux;1200;1800;12;4
+Tequila Kit;Vins & Spiritueux;8000;12000;6;2
+Vodka Kit;Vins & Spiritueux;1200;1800;12;4
+Cognac;Vins & Spiritueux;1300;2000;12;4

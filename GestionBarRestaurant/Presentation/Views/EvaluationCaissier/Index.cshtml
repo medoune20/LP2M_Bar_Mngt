@@ -1,0 +1,46 @@
+@model List<EvaluationCaissierVm>
+@{
+    ViewData["Title"] = "Évaluation des caissiers";
+    var labels = ViewBag.Labels as List<string> ?? new();
+    var values = ViewBag.Values as List<decimal> ?? new();
+}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="fw-bold mb-1">Évaluation des caissiers</h1>
+        <p class="text-muted mb-0">Performance, panier moyen, remises et score global.</p>
+    </div>
+</div>
+
+<form method="get" class="card mb-4">
+    <div class="card-body row g-3 align-items-end">
+        <div class="col-md-4"><label class="form-label">Début</label><input type="date" name="debut" value="@ViewBag.Debut" class="form-control" /></div>
+        <div class="col-md-4"><label class="form-label">Fin</label><input type="date" name="fin" value="@ViewBag.Fin" class="form-control" /></div>
+        <div class="col-md-4 d-grid"><button class="btn btn-primary">Analyser</button></div>
+    </div>
+</form>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6"><div class="card metric-card"><div class="card-body"><div class="metric-label">CA période</div><div class="metric-value">@String.Format("{0:N0}", ViewBag.TotalCa)</div><i class="bi bi-cash-coin metric-icon"></i></div></div></div>
+    <div class="col-md-6"><div class="card metric-card"><div class="card-body"><div class="metric-label">Tickets période</div><div class="metric-value">@ViewBag.TotalTickets</div><i class="bi bi-receipt metric-icon"></i></div></div></div>
+</div>
+
+<div class="card mb-4"><div class="card-body"><h5 class="fw-bold mb-3">Score des caissiers</h5><canvas id="cashierChart" height="120"></canvas></div></div>
+
+<div class="card">
+    <div class="card-body table-responsive">
+        <h5 class="fw-bold mb-3">Classement</h5>
+        <table class="table align-middle">
+            <thead><tr><th>Caissier</th><th class="text-end">Tickets</th><th class="text-end">CA</th><th class="text-end">Panier moyen</th><th class="text-end">Produits</th><th class="text-end">Remises</th><th class="text-end">Score</th><th>Appréciation</th></tr></thead>
+            <tbody>@foreach (var e in Model){<tr><td class="fw-semibold">@e.Caissier</td><td class="text-end">@e.NombreTickets</td><td class="text-end">@String.Format("{0:N0}", e.ChiffreAffaires)</td><td class="text-end">@String.Format("{0:N0}", e.PanierMoyen)</td><td class="text-end">@e.ProduitsVendus</td><td class="text-end">@String.Format("{0:N0}", e.RemisesAccordees)</td><td class="text-end"><span class="badge bg-primary">@String.Format("{0:N0}", e.ScorePerformance)</span></td><td>@e.Appreciation</td></tr>}</tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const labelsCashier = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(labels));
+const valuesCashier = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(values));
+const cctx = document.getElementById('cashierChart');
+if (cctx) { new Chart(cctx, { type: 'bar', data: { labels: labelsCashier, datasets: [{ label: 'Score', data: valuesCashier }] }, options: { responsive: true, scales: { y: { min: 0, max: 100 } }, plugins: { legend: { display: false } } } }); }
+</script>
+}

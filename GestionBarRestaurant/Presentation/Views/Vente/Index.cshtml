@@ -1,0 +1,34 @@
+@model List<Vente>
+@{
+    ViewData["Title"] = "Ventes";
+}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h1 class="fw-bold mb-1">Ventes</h1>
+        <p class="text-muted mb-0">Historique des tickets de vente.</p>
+    </div>
+    <a asp-action="Rapide" class="btn btn-primary"><i class="bi bi-lightning-charge me-1"></i> Caisse rapide</a>
+</div>
+
+<div class="card">
+    <div class="card-body table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Ticket</th><th>Date</th><th>Client</th><th>Vendeur</th><th>Paiement</th><th>Statut</th><th class="text-end">Total</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var v in Model)
+            {
+                <tr>
+                    <td class="fw-semibold">@v.NumeroTicket</td>
+                    <td>@v.DateVente.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@v.ClientNom</td>
+                    <td>@v.Vendeur</td>
+                    <td>@v.ModePaiement@if (!string.IsNullOrWhiteSpace(v.ReferencePaiement)) { <div class="text-muted small">@v.ReferencePaiement</div> }</td>
+                    <td><span class="badge @(v.Statut == StatutVente.Annulee ? "bg-danger" : "bg-success")">@(v.Statut == StatutVente.Annulee ? "Annulée" : "Validée")</span></td>
+                    <td class="text-end fw-bold @(v.Statut == StatutVente.Annulee ? "text-decoration-line-through text-muted" : "")">@String.Format("{0:N0} FCFA", v.Total)</td>
+                    <td class="text-end"><a asp-action="Details" asp-route-id="@v.Id" class="btn btn-sm btn-outline-primary">Détails</a></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

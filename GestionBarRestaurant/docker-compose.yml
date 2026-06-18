@@ -1,0 +1,40 @@
+services:
+  app:
+    build: .
+    container_name: gestionbar-app
+    restart: unless-stopped
+    environment:
+      - DATA_DIR=/app/Data
+      - ASPNETCORE_ENVIRONMENT=Production
+      # Sous-dossier d'hébergement : l'app vit sous lp2medoune.com/gestionbar
+      - PATH_BASE=/gestionbar
+      # Email (confirmation d'inscription / activation). Exemple Gmail :
+      # - SMTP_HOST=smtp.gmail.com
+      # - SMTP_PORT=587
+      # - SMTP_USER=tonadresse@gmail.com
+      # - SMTP_PASS=mot_de_passe_application
+      # - SMTP_FROM=tonadresse@gmail.com
+      # - SMTP_SSL=true
+    volumes:
+      # La base SQLite et les sauvegardes survivent aux mises à jour du conteneur
+      - ./data:/app/Data
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: gestionbar-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,21 @@
+@model List<Utilisateur>
+@{
+    ViewData["Title"] = "Utilisateurs";
+    var tenants = ViewBag.Tenants as List<Tenant> ?? new();
+}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div><h1 class="fw-bold mb-1">Utilisateurs</h1><p class="text-muted mb-0">Gestion des accès, rôles et rattachement tenant.</p></div>
+    <a asp-action="Nouveau" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Ajouter</a>
+</div>
+<div class="card"><div class="card-body table-responsive">
+    <table class="table align-middle">
+        <thead><tr><th>Nom</th><th>Login</th><th>Tenant</th><th>Profil / rôle</th><th>Super admin</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+        @foreach (var u in Model)
+        {
+            var t = tenants.FirstOrDefault(x => x.Id == u.TenantId);
+            <tr><td class="fw-semibold">@u.Nom</td><td>@u.Login</td><td>@(t?.Nom ?? "-")</td><td>@u.Role</td><td>@(u.IsSuperAdmin ? "Oui" : "Non")</td><td><span class="badge @(u.Actif ? "bg-success" : "bg-secondary")">@(u.Actif ? "Actif" : "Inactif")</span></td><td class="text-end"><a asp-action="Modifier" asp-route-id="@u.Id" class="btn btn-sm btn-outline-primary">Modifier</a><form asp-action="BasculerActif" asp-route-id="@u.Id" method="post" class="d-inline">@Html.AntiForgeryToken()<button class="btn btn-sm btn-outline-secondary">Activer/Désactiver</button></form></td></tr>
+        }
+        </tbody>
+    </table>
+</div></div>

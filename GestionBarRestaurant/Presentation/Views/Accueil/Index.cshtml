@@ -1,0 +1,57 @@
+@{
+    ViewData["Title"] = "Tableau de bord";
+    var caisse = ViewBag.Caisse as CaisseSession;
+    var ventes = ViewBag.DernieresVentes as List<Vente> ?? new();
+    var faibles = ViewBag.ProduitsFaibleStock as List<Produit> ?? new();
+    var labels = ViewBag.GraphLabels as List<string> ?? new();
+    var values = ViewBag.GraphValues as List<decimal> ?? new();
+}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h1 class="fw-bold mb-1">Tableau de bord - @ViewBag.TenantNom</h1>
+        <p class="text-muted mb-0">Pilotage rapide de l'activité du bar/restaurant.</p>
+    </div>
+    <a asp-controller="Vente" asp-action="Rapide" class="btn btn-primary btn-lg">
+        <i class="bi bi-lightning-charge me-1"></i> Caisse rapide
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Ventes du jour</div><div class="metric-value">@String.Format("{0:N0} FCFA", ViewBag.TotalJour)</div><i class="bi bi-cart-check metric-icon"></i></div></div></div>
+    <div class="col-md-2"><div class="card metric-card"><div class="card-body"><div class="metric-label">Tickets</div><div class="metric-value">@ViewBag.NombreTickets</div><i class="bi bi-receipt metric-icon"></i></div></div></div>
+    <div class="col-md-2"><div class="card metric-card"><div class="card-body"><div class="metric-label">Clients</div><div class="metric-value">@ViewBag.NombreClients</div><i class="bi bi-person-lines-fill metric-icon"></i></div></div></div>
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Dépenses du jour</div><div class="metric-value">@String.Format("{0:N0} FCFA", ViewBag.TotalDepenses)</div><i class="bi bi-coin metric-icon"></i></div></div></div>
+    <div class="col-md-2"><div class="card metric-card"><div class="card-body"><div class="metric-label">Alertes stock</div><div class="metric-value">@ViewBag.StockFaible</div><i class="bi bi-exclamation-triangle metric-icon"></i></div></div></div>
+</div>
+
+<div class="row g-4 mt-1">
+    <div class="col-lg-7">
+        <div class="card h-100"><div class="card-body"><h5 class="fw-bold mb-3">Ventes des 7 derniers jours</h5><canvas id="salesChart" height="130"></canvas></div></div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card h-100"><div class="card-body">
+            <h5 class="fw-bold mb-3">État de la caisse</h5>
+            @if (caisse == null) { <div class="alert alert-warning mb-0">Aucune caisse ouverte.</div> }
+            else {
+                <div class="row"><div class="col-6 text-muted">Caissier</div><div class="col-6 text-end fw-bold">@caisse.Caissier</div><div class="col-6 text-muted">Ouverture</div><div class="col-6 text-end">@caisse.DateOuverture.ToString("dd/MM/yyyy HH:mm")</div><div class="col-6 text-muted">Solde théorique</div><div class="col-6 text-end fw-bold">@String.Format("{0:N0} FCFA", caisse.SoldeTheorique)</div></div>
+            }
+            <hr />
+            <h6 class="fw-bold">Alertes stock</h6>
+            @if (!faibles.Any()) { <div class="text-muted">Aucune alerte stock.</div> }
+            else { foreach (var p in faibles) { <div class="d-flex justify-content-between border-bottom py-2"><span>@p.Nom</span><span class="badge bg-danger">@p.StockActuel</span></div> } }
+        </div></div>
+    </div>
+</div>
+
+<div class="card mt-4"><div class="card-body"><h5 class="fw-bold mb-3">Dernières ventes</h5><div class="table-responsive"><table class="table align-middle"><thead><tr><th>Ticket</th><th>Date</th><th>Client</th><th>Vendeur</th><th class="text-end">Total</th><th></th></tr></thead><tbody>@foreach (var v in ventes){<tr><td>@v.NumeroTicket</td><td>@v.DateVente.ToString("dd/MM/yyyy HH:mm")</td><td>@v.ClientNom</td><td>@v.Vendeur</td><td class="text-end fw-bold">@String.Format("{0:N0} FCFA", v.Total)</td><td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-controller="Vente" asp-action="Details" asp-route-id="@v.Id">Voir</a></td></tr>}</tbody></table></div></div></div>
+
+@section Scripts {
+<script>
+const labels = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(labels));
+const values = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(values));
+const ctx = document.getElementById('salesChart');
+if (ctx && typeof Chart !== 'undefined') {
+    new Chart(ctx, { type: 'line', data: { labels: labels, datasets: [{ label: 'CA', data: values, tension: .35 }] }, options: { responsive: true, plugins: { legend: { display: false } } } });
+}
+</script>
+}
