@@ -1,0 +1,99 @@
+@model List<Client>
+@{
+    ViewData["Title"] = "Fidélisation";
+    var regle = ViewBag.Regle as RegleFidelite ?? new RegleFidelite();
+    var mouvements = ViewBag.Mouvements as List<MouvementFidelite> ?? new();
+}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="fw-bold mb-1">Fidélisation clients</h1>
+        <p class="text-muted mb-0">Points, remises fidélité et historique des mouvements.</p>
+    </div>
+</div>
+
+@if (ViewBag.ErreurTechnique != null)
+{
+    <div class="alert alert-danger">
+        <strong>Erreur module Fidélité :</strong> @ViewBag.ErreurTechnique
+        <div class="small mt-1">La base SQLite a peut-être été créée avec une ancienne version. Cette version corrigée mettra le schéma à jour au prochain démarrage.</div>
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card h-100 loyalty-card">
+            <div class="card-body">
+                <h5 class="fw-bold mb-3">Règle de fidélité</h5>
+                <form asp-action="ModifierRegle" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Id" value="@regle.Id" />
+                    <input type="hidden" name="TenantId" value="@regle.TenantId" />
+                    <div class="mb-3"><label class="form-label">Nom du programme</label><input name="NomProgramme" value="@regle.NomProgramme" class="form-control" /></div>
+                    <div class="mb-3"><label class="form-label">Montant pour 1 point</label><input name="MontantPourUnPoint" value="@regle.MontantPourUnPoint" type="number" step="1" class="form-control" /></div>
+                    <div class="mb-3"><label class="form-label">Valeur d'un point</label><input name="ValeurPoint" value="@regle.ValeurPoint" type="number" step="1" class="form-control" /></div>
+                    <div class="mb-3"><label class="form-label">Seuil utilisation points</label><input name="SeuilUtilisationPoints" value="@regle.SeuilUtilisationPoints" type="number" step="1" class="form-control" /></div>
+                    <div class="form-check mb-3">
+                        <input name="Actif" value="true" class="form-check-input" type="checkbox" @(regle.Actif ? "checked" : "") />
+                        <input type="hidden" name="Actif" value="false" />
+                        <label class="form-check-label">Programme actif</label>
+                    </div>
+                    <button class="btn btn-primary w-100">Enregistrer règle</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-body table-responsive">
+                <h5 class="fw-bold mb-3">Clients fidélité</h5>
+                <table class="table align-middle">
+                    <thead><tr><th>Client</th><th>Type</th><th class="text-end">Points</th><th class="text-end">Achats</th><th>Dernière visite</th><th>Ajuster</th></tr></thead>
+                    <tbody>
+                    @foreach (var c in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@c.Nom</td>
+                            <td>@c.TypeClient</td>
+                            <td class="text-end"><span class="badge bg-primary">@c.PointsFidelite</span></td>
+                            <td class="text-end">@String.Format("{0:N0} FCFA", c.TotalAchats)</td>
+                            <td>@(c.DerniereVisite.HasValue ? c.DerniereVisite.Value.ToString("dd/MM/yyyy") : "-")</td>
+                            <td>
+                                <form asp-action="AjusterPoints" method="post" class="d-flex gap-2">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="clientId" value="@c.Id" />
+                                    <input name="points" type="number" class="form-control form-control-sm" style="width:90px" placeholder="+/-" />
+                                    <input name="commentaire" class="form-control form-control-sm" placeholder="Motif" />
+                                    <button class="btn btn-sm btn-outline-primary">OK</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body table-responsive">
+        <h5 class="fw-bold mb-3">Historique des points</h5>
+        <table class="table align-middle">
+            <thead><tr><th>Date</th><th>Client</th><th>Type</th><th class="text-end">Points</th><th>Commentaire</th><th>Utilisateur</th></tr></thead>
+            <tbody>
+            @foreach (var m in mouvements)
+            {
+                <tr>
+                    <td>@m.DateMouvement.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@m.ClientNom</td>
+                    <td>@m.TypeMouvement</td>
+                    <td class="text-end @(m.Points >= 0 ? "text-success" : "text-danger")">@m.Points</td>
+                    <td>@m.Commentaire</td>
+                    <td>@m.Utilisateur</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,149 @@
+@{
+    ViewData["Title"] = "Messagerie";
+    var utilisateurId = (int)(ViewBag.UtilisateurId ?? 0);
+    var tenantNom = ViewBag.TenantNom as string ?? "établissement";
+}
+
+<div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-chat-dots-fill me-2"></i>Messagerie de l'équipe</h4>
+        <small class="text-muted">Échanges en direct entre les utilisateurs de @tenantNom</small>
+    </div>
+    <span id="chat-statut" class="badge text-bg-secondary"><i class="bi bi-arrow-repeat me-1"></i>Connexion…</span>
+</div>
+
+<div class="card chat-card shadow-sm">
+    <div id="chat-messages" class="chat-messages" aria-live="polite">
+        <div id="chat-vide" class="chat-vide text-muted">
+            <i class="bi bi-chat-square-text d-block mb-2" style="font-size:2rem;"></i>
+            Aucun message pour l'instant. Démarrez la conversation !
+        </div>
+    </div>
+    <form id="chat-form" class="chat-form" autocomplete="off">
+        <input type="text" id="chat-input" class="form-control" maxlength="2000"
+               placeholder="Écrire un message…" aria-label="Message" disabled />
+        <button type="submit" id="chat-envoyer" class="btn btn-primary" disabled>
+            <i class="bi bi-send-fill"></i><span class="d-none d-sm-inline ms-1">Envoyer</span>
+        </button>
+    </form>
+</div>
+
+@section Styles {
+    <style>
+        .chat-card { max-width: 900px; margin: 0 auto; overflow: hidden; }
+        .chat-messages {
+            height: 60vh; min-height: 320px; overflow-y: auto;
+            padding: 1rem; background: #f6f8fb; display: flex; flex-direction: column; gap: .5rem;
+        }
+        .chat-vide { margin: auto; text-align: center; }
+        .chat-msg { max-width: 78%; padding: .5rem .75rem; border-radius: .9rem;
+            background: #fff; border: 1px solid #e6e9ef; box-shadow: 0 1px 1px rgba(0,0,0,.03); }
+        .chat-msg .chat-auteur { font-size: .72rem; font-weight: 700; color: var(--tenant-color, #165DFF); }
+        .chat-msg .chat-texte { white-space: pre-wrap; word-break: break-word; }
+        .chat-msg .chat-heure { font-size: .68rem; color: #8a93a3; text-align: right; margin-top: .15rem; }
+        .chat-msg.moi { align-self: flex-end; background: var(--tenant-color, #165DFF); color: #fff; border-color: transparent; }
+        .chat-msg.moi .chat-auteur { color: rgba(255,255,255,.85); }
+        .chat-msg.moi .chat-heure { color: rgba(255,255,255,.8); }
+        .chat-form { display: flex; gap: .5rem; padding: .75rem; border-top: 1px solid #e6e9ef; background: #fff; }
+    </style>
+}
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@@8.0.7/dist/browser/signalr.min.js"></script>
+    <script>
+        (function () {
+            const moiId = @utilisateurId;
+            const zone = document.getElementById('chat-messages');
+            const vide = document.getElementById('chat-vide');
+            const form = document.getElementById('chat-form');
+            const input = document.getElementById('chat-input');
+            const bouton = document.getElementById('chat-envoyer');
+            const statut = document.getElementById('chat-statut');
+            const urlHub = '@Url.Content("~/hubChat")';
+            const urlHistorique = '@Url.Action("Historique", "Chat")';
+            let connecte = false;
+
+            function definirStatut(texte, classe) {
+                statut.className = 'badge ' + classe;
+                statut.innerHTML = texte;
+            }
+
+            function defilerEnBas() { zone.scrollTop = zone.scrollHeight; }
+
+            function ajouterMessage(m) {
+                if (vide) vide.style.display = 'none';
+                const bulle = document.createElement('div');
+                bulle.className = 'chat-msg' + (Number(m.utilisateurId) === moiId ? ' moi' : '');
+
+                const auteur = document.createElement('div');
+                auteur.className = 'chat-auteur';
+                auteur.textContent = m.auteur;
+
+                const texte = document.createElement('div');
+                texte.className = 'chat-texte';
+                texte.textContent = m.texte; // textContent => protection XSS
+
+                const heure = document.createElement('div');
+                heure.className = 'chat-heure';
+                heure.textContent = m.heure;
+
+                bulle.appendChild(auteur);
+                bulle.appendChild(texte);
+                bulle.appendChild(heure);
+                zone.appendChild(bulle);
+                defilerEnBas();
+            }
+
+            // Chargement de l'historique (filet de sécurité indépendant du temps réel).
+            fetch(urlHistorique, { headers: { 'Accept': 'application/json' } })
+                .then(r => r.ok ? r.json() : [])
+                .then(liste => { (liste || []).forEach(ajouterMessage); })
+                .catch(() => { });
+
+            const connection = new signalR.HubConnectionBuilder()
+                .withUrl(urlHub)
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on('RecevoirMessage', ajouterMessage);
+
+            connection.onreconnecting(() => {
+                connecte = false;
+                input.disabled = true; bouton.disabled = true;
+                definirStatut('<i class="bi bi-arrow-repeat me-1"></i>Reconnexion…', 'text-bg-warning');
+            });
+            connection.onreconnected(() => {
+                connecte = true;
+                input.disabled = false; bouton.disabled = false;
+                definirStatut('<i class="bi bi-broadcast me-1"></i>En direct', 'text-bg-success');
+            });
+            connection.onclose(() => {
+                connecte = false;
+                input.disabled = true; bouton.disabled = true;
+                definirStatut('<i class="bi bi-plug me-1"></i>Déconnecté', 'text-bg-danger');
+            });
+
+            connection.start()
+                .then(() => {
+                    connecte = true;
+                    input.disabled = false; bouton.disabled = false;
+                    definirStatut('<i class="bi bi-broadcast me-1"></i>En direct', 'text-bg-success');
+                    input.focus();
+                })
+                .catch(() => {
+                    definirStatut('<i class="bi bi-exclamation-triangle me-1"></i>Hors ligne', 'text-bg-danger');
+                });
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const texte = input.value.trim();
+                if (!texte || !connecte) return;
+                bouton.disabled = true;
+                connection.invoke('Envoyer', texte)
+                    .then(() => { input.value = ''; })
+                    .catch(() => { })
+                    .finally(() => { bouton.disabled = false; input.focus(); });
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,23 @@
+@{
+    ViewData["Title"] = "Rapports";
+    var topProduits = ViewBag.TopProduits as List<TopProduitVm> ?? new();
+    var depensesCat = ViewBag.DepensesParCategorie as List<DepenseCategorieVm> ?? new();
+    var clients = ViewBag.Clients as List<ClientPerformanceVm> ?? new();
+}
+<h1 class="fw-bold mb-4">Rapports</h1>
+<form method="get" class="card mb-4"><div class="card-body row g-3 align-items-end">
+    <div class="col-md-4"><label class="form-label">Début</label><input type="date" name="debut" value="@ViewBag.Debut" class="form-control" /></div>
+    <div class="col-md-4"><label class="form-label">Fin</label><input type="date" name="fin" value="@ViewBag.Fin" class="form-control" /></div>
+    <div class="col-md-4 d-grid"><button class="btn btn-primary">Filtrer</button></div>
+</div></form>
+<div class="row g-4">
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">CA</div><div class="metric-value">@String.Format("{0:N0}", ViewBag.TotalVentes)</div><i class="bi bi-graph-up metric-icon"></i></div></div></div>
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Dépenses</div><div class="metric-value">@String.Format("{0:N0}", ViewBag.TotalDepenses)</div><i class="bi bi-coin metric-icon"></i></div></div></div>
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Marge estimée</div><div class="metric-value">@String.Format("{0:N0}", ViewBag.MargeEstimee)</div><i class="bi bi-piggy-bank metric-icon"></i></div></div></div>
+    <div class="col-md-3"><div class="card metric-card"><div class="card-body"><div class="metric-label">Tickets</div><div class="metric-value">@ViewBag.NombreTickets</div><i class="bi bi-receipt metric-icon"></i></div></div></div>
+</div>
+<div class="row g-4 mt-1">
+    <div class="col-lg-4"><div class="card"><div class="card-body table-responsive"><h5 class="fw-bold mb-3">Top produits</h5><table class="table"><thead><tr><th>Produit</th><th class="text-center">Qté</th><th class="text-end">Total</th></tr></thead><tbody>@foreach (var p in topProduits){<tr><td>@p.Produit</td><td class="text-center">@p.Quantite</td><td class="text-end">@String.Format("{0:N0}", p.Total)</td></tr>}</tbody></table></div></div></div>
+    <div class="col-lg-4"><div class="card"><div class="card-body table-responsive"><h5 class="fw-bold mb-3">Dépenses par catégorie</h5><table class="table"><thead><tr><th>Catégorie</th><th class="text-end">Total</th></tr></thead><tbody>@foreach (var d in depensesCat){<tr><td>@d.Categorie</td><td class="text-end">@String.Format("{0:N0}", d.Total)</td></tr>}</tbody></table></div></div></div>
+    <div class="col-lg-4"><div class="card"><div class="card-body table-responsive"><h5 class="fw-bold mb-3">Clients</h5><table class="table"><thead><tr><th>Client</th><th class="text-center">Tickets</th><th class="text-end">Total</th></tr></thead><tbody>@foreach (var c in clients){<tr><td>@c.Client</td><td class="text-center">@c.Tickets</td><td class="text-end">@String.Format("{0:N0}", c.Total)</td></tr>}</tbody></table></div></div></div>
+</div>

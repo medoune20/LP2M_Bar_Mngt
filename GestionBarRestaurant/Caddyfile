@@ -1,0 +1,27 @@
+# Domaine unique hébergeant plusieurs applications par sous-dossier.
+# HTTPS (Let's Encrypt) automatique pour lp2medoune.com et www.
+lp2medoune.com, www.lp2medoune.com {
+    encode gzip
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+    }
+
+    # --- Application Gestion Bar : lp2medoune.com/gestionbar ---
+    # 'handle' (et non 'handle_path') conserve le préfixe /gestionbar dans l'URL ;
+    # l'application le retire via PATH_BASE et préfixe tous ses liens en conséquence.
+    handle /gestionbar* {
+        reverse_proxy app:8080
+    }
+
+    # --- Page d'accueil du domaine : rediriger vers l'application ---
+    handle / {
+        redir /gestionbar/ 302
+    }
+
+    # --- Emplacement pour les futures applications ---
+    # handle /autreapp* {
+    #     reverse_proxy autreapp:8080
+    # }
+}

@@ -1,0 +1,35 @@
+@model List<MouvementStock>
+@{
+    ViewData["Title"] = "Stock";
+    var produits = ViewBag.Produits as List<Produit> ?? new();
+    var alertes = ViewBag.Alertes as List<Produit> ?? new();
+}
+<h1 class="fw-bold mb-4">Stock</h1>
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card"><div class="card-body">
+            <h5 class="fw-bold mb-3">Nouveau mouvement</h5>
+            <form asp-action="Ajuster" method="post">
+                @Html.AntiForgeryToken()
+                <div class="mb-3"><label class="form-label">Produit</label><select name="produitId" class="form-select" required>@foreach (var p in produits){<option value="@p.Id">@p.Nom - Stock: @p.StockActuel</option>}</select></div>
+                <div class="mb-3"><label class="form-label">Type</label><select name="type" class="form-select"><option value="@((int)TypeMouvementStock.Entree)">Entrée</option><option value="@((int)TypeMouvementStock.Sortie)">Sortie</option><option value="@((int)TypeMouvementStock.Ajustement)">Ajustement stock final</option></select></div>
+                <div class="mb-3"><label class="form-label">Quantité</label><input name="quantite" type="number" min="0" class="form-control" required /></div>
+                <div class="mb-3"><label class="form-label">Coût d'achat unitaire (entrées)</label><input name="coutUnitaire" type="number" min="0" step="1" class="form-control" placeholder="Recalcule le prix d'achat (CMUP)" /></div>
+                <div class="mb-3"><label class="form-label">Motif</label><input name="motif" class="form-control" placeholder="Approvisionnement, casse, inventaire..." /></div>
+                <button class="btn btn-primary w-100">Enregistrer</button>
+            </form>
+        </div></div>
+        <div class="card mt-4"><div class="card-body"><h5 class="fw-bold mb-3">Alertes stock</h5>
+            @if (!alertes.Any()){<div class="text-muted">Aucune alerte.</div>} else { foreach (var p in alertes){<div class="d-flex justify-content-between border-bottom py-2"><span>@p.Nom</span><span class="badge bg-danger">@p.StockActuel</span></div>} }
+        </div></div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card"><div class="card-body table-responsive">
+            <h5 class="fw-bold mb-3">Historique des mouvements</h5>
+            <table class="table align-middle">
+                <thead><tr><th>Date</th><th>Produit</th><th>Type</th><th class="text-center">Qté</th><th class="text-end">Coût unit.</th><th>Motif</th><th>Utilisateur</th></tr></thead>
+                <tbody>@foreach (var m in Model){<tr><td>@m.DateMouvement.ToString("dd/MM/yyyy HH:mm")</td><td>@m.ProduitNom</td><td>@m.Type</td><td class="text-center">@m.Quantite</td><td class="text-end">@(m.CoutUnitaire.HasValue ? String.Format("{0:N0}", m.CoutUnitaire.Value) : "-")</td><td>@m.Motif</td><td>@m.Utilisateur</td></tr>}</tbody>
+            </table>
+        </div></div>
+    </div>
+</div>

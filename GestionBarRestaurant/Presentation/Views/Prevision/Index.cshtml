@@ -1,0 +1,58 @@
+@model List<PrevisionVenteVm>
+@{
+    ViewData["Title"] = "Prévision des ventes";
+    var labels = ViewBag.Labels as List<string> ?? new();
+    var values = ViewBag.Values as List<decimal> ?? new();
+    var topProduits = ViewBag.TopProduits as List<TopProduitVm> ?? new();
+}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="fw-bold mb-1">Prévision des ventes</h1>
+        <p class="text-muted mb-0">Projection basée sur l'historique récent et la tendance.</p>
+    </div>
+</div>
+
+<form method="get" class="card mb-4">
+    <div class="card-body row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label">Horizon de prévision</label>
+            <select name="horizon" class="form-select">
+                <option value="7" selected="@(ViewBag.Horizon == 7)">7 jours</option>
+                <option value="14" selected="@(ViewBag.Horizon == 14)">14 jours</option>
+                <option value="30" selected="@(ViewBag.Horizon == 30)">30 jours</option>
+                <option value="60" selected="@(ViewBag.Horizon == 60)">60 jours</option>
+            </select>
+        </div>
+        <div class="col-md-4 d-grid"><button class="btn btn-primary">Calculer</button></div>
+    </div>
+</form>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-4"><div class="card metric-card"><div class="card-body"><div class="metric-label">CA prévu</div><div class="metric-value">@String.Format("{0:N0}", ViewBag.TotalPrevu)</div><i class="bi bi-graph-up-arrow metric-icon"></i></div></div></div>
+    <div class="col-md-4"><div class="card metric-card"><div class="card-body"><div class="metric-label">Moyenne journalière</div><div class="metric-value">@String.Format("{0:N0}", ViewBag.Moyenne)</div><i class="bi bi-calendar-week metric-icon"></i></div></div></div>
+    <div class="col-md-4"><div class="card metric-card"><div class="card-body"><div class="metric-label">Tendance</div><div class="metric-value">@String.Format("{0:N1}%", ViewBag.Tendance)</div><i class="bi bi-activity metric-icon"></i></div></div></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-8"><div class="card"><div class="card-body"><h5 class="fw-bold mb-3">Projection</h5><canvas id="forecastChart" height="130"></canvas></div></div></div>
+    <div class="col-lg-4"><div class="card"><div class="card-body table-responsive"><h5 class="fw-bold mb-3">Produits moteurs</h5><table class="table"><thead><tr><th>Produit</th><th class="text-end">CA</th></tr></thead><tbody>@foreach (var p in topProduits){<tr><td>@p.Produit</td><td class="text-end">@String.Format("{0:N0}", p.Total)</td></tr>}</tbody></table></div></div></div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body table-responsive">
+        <h5 class="fw-bold mb-3">Détail prévisionnel</h5>
+        <table class="table align-middle">
+            <thead><tr><th>Date</th><th class="text-end">CA prévu</th><th class="text-end">Moyenne</th><th class="text-end">Tendance</th></tr></thead>
+            <tbody>@foreach (var p in Model){<tr><td>@p.Periode</td><td class="text-end fw-bold">@String.Format("{0:N0} FCFA", p.ChiffreAffairesPrevu)</td><td class="text-end">@String.Format("{0:N0}", p.MoyenneJournaliere)</td><td class="text-end">@String.Format("{0:N1}%", p.TendancePourcentage)</td></tr>}</tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+const labelsForecast = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(labels));
+const valuesForecast = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(values));
+const fctx = document.getElementById('forecastChart');
+if (fctx) { new Chart(fctx, { type: 'bar', data: { labels: labelsForecast, datasets: [{ label: 'CA prévu', data: valuesForecast }] }, options: { responsive: true, plugins: { legend: { display: false } } } }); }
+</script>
+}

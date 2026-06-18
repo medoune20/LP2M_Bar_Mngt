@@ -1,0 +1,99 @@
+@model Vente
+@{
+    ViewData["Title"] = "Détail vente";
+}
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <div>
+        <h1 class="fw-bold mb-1">Ticket @Model.NumeroTicket</h1>
+        <p class="text-muted mb-0">@Model.DateVente.ToString("dd/MM/yyyy HH:mm") - @Model.ClientNom - @Model.Vendeur</p>
+    </div>
+    <div class="d-flex gap-2 align-items-center">
+        @if (Model.Statut == StatutVente.Annulee)
+        {
+            <span class="badge bg-danger fs-6">VENTE ANNULÉE</span>
+        }
+        <button class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer me-1"></i> Imprimer</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Retour</a>
+    </div>
+</div>
+
+@if (Model.Statut == StatutVente.Annulee)
+{
+    <div class="alert alert-danger no-print">
+        <strong>Vente annulée</strong> le @(Model.DateAnnulation?.ToString("dd/MM/yyyy HH:mm")) par @Model.AnnuleePar.
+        Motif : @Model.MotifAnnulation
+    </div>
+}
+else if ((Context.Session.GetInt32("UtilisateurRole") ?? 0) is 1 or 3)
+{
+    <div class="card mb-4 no-print border-danger">
+        <div class="card-body">
+            <h6 class="fw-bold text-danger mb-2">Annuler cette vente (Manager / Administrateur)</h6>
+            <p class="text-muted small mb-2">L'annulation restitue le stock, reprend les points fidélité, contre-passe la caisse et conserve le ticket pour audit.</p>
+            <form asp-action="Annuler" method="post" class="d-flex gap-2" onsubmit="return confirm('Confirmer l\'annulation de cette vente ?');">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+                <input name="motif" class="form-control" placeholder="Motif d'annulation (obligatoire)" required />
+                <button class="btn btn-danger flex-shrink-0">Annuler la vente</button>
+            </form>
+        </div>
+    </div>
+}
+
+<div class="ticket-print card">
+    <div class="card-body">
+        @{ var t = ViewBag.Tenant as Domaine.Models.Tenant; }
+        <div class="ticket-header text-center">
+            @if (t != null && !string.IsNullOrWhiteSpace(t.LogoPath))
+            {
+                <img src="@(t.LogoPath.StartsWith("/") ? Url.Content("~" + t.LogoPath) : t.LogoPath)" style="max-height:60px;margin-bottom:6px;" />
+            }
+            <h4 class="fw-bold mb-0">@(t?.Nom ?? "GESTION BAR")</h4>
+            @if (t != null && !string.IsNullOrWhiteSpace(t.Slogan)) { <div class="small fst-italic">@t.Slogan</div> }
+            @if (t != null && !string.IsNullOrWhiteSpace(t.Adresse)) { <div class="small">@t.Adresse @(string.IsNullOrWhiteSpace(t.Ville) ? "" : "- " + t.Ville)</div> }
+            @if (t != null && !string.IsNullOrWhiteSpace(t.Telephone)) { <div class="small">Tél : @t.Telephone</div> }
+            <hr class="my-2" />
+            <div>Ticket : @Model.NumeroTicket</div>
+            <div>@Model.DateVente.ToString("dd/MM/yyyy HH:mm")</div>
+            <div>Client : @Model.ClientNom</div>
+            <div>Servi par : @Model.Vendeur</div>
+            <div>Paiement : @Model.ModePaiement</div>
+            @if (!string.IsNullOrWhiteSpace(Model.ReferencePaiement))
+            {
+                <div>Réf. transaction : @Model.ReferencePaiement</div>
+            }
+        </div>
+        <hr />
+        <table class="table table-sm align-middle">
+            <thead><tr><th>Produit</th><th class="text-center">Qté</th><th class="text-end">PU</th><th class="text-end">Total</th></tr></thead>
+            <tbody>
+            @foreach (var l in Model.Lignes)
+            {
+                <tr><td>@l.ProduitNom</td><td class="text-center">@l.Quantite</td><td class="text-end">@String.Format("{0:N0}", l.PrixUnitaire)</td><td class="text-end fw-semibold">@String.Format("{0:N0}", l.Total)</td></tr>
+            }
+            </tbody>
+            <tfoot>
+                <tr><th colspan="3" class="text-end">Total brut</th><th class="text-end">@String.Format("{0:N0} FCFA", Model.TotalBrut)</th></tr>
+                <tr><th colspan="3" class="text-end">Remise commerciale</th><th class="text-end">@String.Format("{0:N0} FCFA", Model.Remise)</th></tr>
+                <tr><th colspan="3" class="text-end">Remise fidélité</th><th class="text-end">@String.Format("{0:N0} FCFA", Model.RemiseFidelite)</th></tr>
+                <tr><th colspan="3" class="text-end">Points utilisés</th><th class="text-end">@Model.PointsFideliteUtilises</th></tr>
+                <tr><th colspan="3" class="text-end">Points gagnés</th><th class="text-end">@Model.PointsFideliteGagnes</th></tr>
+                <tr><th colspan="3" class="text-end">Total net</th><th class="text-end">@String.Format("{0:N0} FCFA", Model.Total)</th></tr>
+                <tr><th colspan="3" class="text-end">Montant reçu</th><th class="text-end">@String.Format("{0:N0} FCFA", Model.MontantRecu)</th></tr>
+                <tr><th colspan="3" class="text-end">Monnaie</th><th class="text-end">@String.Format("{0:N0} FCFA", Model.MonnaieRendue)</th></tr>
+            </tfoot>
+        </table>
+        <hr />
+        <div class="text-center small">
+            @if (t != null && (!string.IsNullOrWhiteSpace(t.RegistreCommerce) || !string.IsNullOrWhiteSpace(t.NumeroContribuable)))
+            {
+                <div class="text-muted">
+                    @if (!string.IsNullOrWhiteSpace(t.RegistreCommerce)) { <span>RCCM : @t.RegistreCommerce</span> }
+                    @if (!string.IsNullOrWhiteSpace(t.NumeroContribuable)) { <span> &nbsp;NCC : @t.NumeroContribuable</span> }
+                </div>
+            }
+            @if (t != null && !string.IsNullOrWhiteSpace(t.SiteWeb)) { <div class="text-muted">@t.SiteWeb</div> }
+            <div class="mt-1">@(t != null && !string.IsNullOrWhiteSpace(t.PiedFacture) ? t.PiedFacture : "Merci pour votre visite.")</div>
+        </div>
+    </div>
+</div>

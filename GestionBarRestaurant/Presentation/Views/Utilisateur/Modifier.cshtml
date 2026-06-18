@@ -1,0 +1,40 @@
+@model Utilisateur
+@{
+    ViewData["Title"] = "Modifier utilisateur";
+}
+<h1 class="fw-bold mb-4">Modifier utilisateur</h1>
+
+@{
+    var tenants = ViewBag.Tenants as List<Tenant> ?? new();
+    var profils = ViewBag.Profils as List<Domaine.Models.ProfilAcces> ?? new();
+    var isSuperAdmin = Context.Session.GetString("IsSuperAdmin") == "true";
+}
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            @Html.AntiForgeryToken()
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div class="alert alert-danger">
+                    <strong>Impossible d'enregistrer :</strong>
+                    <div asp-validation-summary="All" class="mb-0"></div>
+                </div>
+            }
+            <input type="hidden" asp-for="Id" />
+            <div class="row g-3">
+                <div class="col-md-6"><label asp-for="Nom" class="form-label"></label><input asp-for="Nom" class="form-control" /><span asp-validation-for="Nom" class="text-danger"></span></div>
+                <div class="col-md-6"><label asp-for="Login" class="form-label"></label><input asp-for="Login" class="form-control" /><span asp-validation-for="Login" class="text-danger"></span></div>
+                <div class="col-md-4"><label asp-for="MotDePasse" class="form-label">Nouveau mot de passe</label><input asp-for="MotDePasse" type="password" class="form-control" autocomplete="new-password" placeholder="Laisser vide pour conserver l’ancien" /><span asp-validation-for="MotDePasse" class="text-danger"></span></div>
+                <input type="hidden" name="Role" value="@Model.Role" />
+                <div class="col-md-4"><label asp-for="ProfilAccesId" class="form-label">Profil / rôle</label><select asp-for="ProfilAccesId" class="form-select" required>@foreach (var pr in profils){<option value="@pr.Id">@pr.Nom</option>}</select><div class="form-text">Le rôle applicatif est aligné sur ce profil.</div></div>
+                <div class="col-md-4"><label asp-for="TenantId" class="form-label">Tenant</label><select asp-for="TenantId" class="form-select" disabled="@(!isSuperAdmin)">@foreach (var t in tenants){<option value="@t.Id">@t.Nom</option>}</select>@if (!isSuperAdmin){<input type="hidden" asp-for="TenantId" />}</div>
+                <div class="col-md-3 form-check ms-2"><input asp-for="Actif" class="form-check-input" /><label asp-for="Actif" class="form-check-label">Actif</label></div>
+                @if (isSuperAdmin)
+                {
+                    <div class="col-md-3 form-check ms-2"><input asp-for="IsSuperAdmin" class="form-check-input" /><label asp-for="IsSuperAdmin" class="form-check-label">Super admin</label></div>
+                }
+            </div>
+            <div class="mt-4"><button class="btn btn-primary">Enregistrer</button><a asp-action="Index" class="btn btn-outline-secondary">Annuler</a></div>
+        </form>
+    </div>
+</div>
