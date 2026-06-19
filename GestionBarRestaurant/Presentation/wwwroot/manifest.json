@@ -1,6 +1,6 @@
 {
-  "name": "Gestion Bar",
-  "short_name": "GestionBar",
+  "name": "LP2M APPS",
+  "short_name": "LP2M APPS",
   "description": "Gestion de bar et restaurant : caisse, stock, clients, fidélité",
   "start_url": ".",
   "display": "standalone",

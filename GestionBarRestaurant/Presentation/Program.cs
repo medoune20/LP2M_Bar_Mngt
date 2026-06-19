@@ -18,6 +18,10 @@ builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
     options.Filters.Add<Presentation.Filtres.AccesModuleFiltre>();
+    // Avec <Nullable>enable</Nullable>, MVC rend obligatoire toute propriété string
+    // non-nullable. On désactive ce comportement : seuls les [Required] explicites
+    // sont exigés (ex. l'établissement n'impose que le Nom).
+    options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
 });
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddScoped<Infrastructure.Services.EmailService>();

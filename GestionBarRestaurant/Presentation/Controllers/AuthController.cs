@@ -246,7 +246,7 @@ public class AuthController : Controller
         _db.SaveChanges();
 
         var lien = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/Auth/ConfirmerEmail?id={admin.Id}&token={token}";
-        _email.Envoyer(email, "Confirmez votre inscription - Gestion Bar",
+        _email.Envoyer(email, "Confirmez votre inscription - LP2M APPS",
             $"<p>Bonjour {nomComplet},</p>" +
             $"<p>Merci pour votre inscription pour <b>{etablissement}</b>.</p>" +
             $"<p>Confirmez votre email en cliquant ici : <a href='{lien}'>Confirmer mon email</a></p>" +
@@ -378,7 +378,7 @@ public class AuthController : Controller
         foreach (var sa in _db.Utilisateurs.Where(u => u.IsSuperAdmin && u.Actif && u.Email != "").ToList())
         {
             _email.Envoyer(sa.Email,
-                "Nouvelle demande d'inscription - Gestion Bar",
+                "Nouvelle demande d'inscription - LP2M APPS",
                 $"<p>Nouvelle demande : <b>{etablissement}</b> ({email}).</p><p>À valider dans « Demandes d'inscription ».</p>");
         }
     }
