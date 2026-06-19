@@ -45,7 +45,7 @@ public class TenantController : BaseController
         u.Actif = true;
         t.Actif = true;
         _db.SaveChanges();
-        _email.Envoyer(u.Email, "Votre compte est activé - Gestion Bar",
+        _email.Envoyer(u.Email, "Votre compte est activé - LP2M APPS",
             $"<p>Bonjour {u.Nom},</p><p>Le compte de <b>{t.Nom}</b> est activé. Vous pouvez vous connecter avec votre identifiant.</p>");
         TempData["Succes"] = $"Compte « {t.Nom} » activé.";
         return RedirectToAction(nameof(Demandes));
@@ -69,7 +69,7 @@ public class TenantController : BaseController
         }
         else { _db.Utilisateurs.Remove(u); }
         _db.SaveChanges();
-        _email.Envoyer(email, "Demande non retenue - Gestion Bar",
+        _email.Envoyer(email, "Demande non retenue - LP2M APPS",
             $"<p>Bonjour {nom},</p><p>Votre demande d'inscription pour « {etab} » n'a pas été retenue.</p>");
         TempData["Succes"] = "Demande rejetée.";
         return RedirectToAction(nameof(Demandes));
