@@ -173,7 +173,7 @@ public class AuthController : Controller
     }
 
     [HttpPost]
-    public IActionResult Inscription(string etablissement, string ville, string nomComplet, string email, string login, string motdepasse)
+    public IActionResult Inscription(string etablissement, string ville, string nomComplet, string email, string login, string motdepasse, string motdepasseConfirmation)
     {
         ViewBag.GoogleActive = GoogleEstConfigure;
         etablissement = (etablissement ?? string.Empty).Trim();
@@ -182,10 +182,24 @@ public class AuthController : Controller
         email = (email ?? string.Empty).Trim();
         login = (login ?? string.Empty).Trim();
         motdepasse ??= string.Empty;
+        motdepasseConfirmation ??= string.Empty;
 
-        if (etablissement.Length < 2 || nomComplet.Length < 2 || login.Length < 3 || motdepasse.Length < 6 || !email.Contains('@'))
+        if (etablissement.Length < 2 || nomComplet.Length < 2 || login.Length < 3 || !email.Contains('@'))
         {
-            ViewBag.Erreur = "Merci de remplir tous les champs (mot de passe d'au moins 6 caractères, email valide).";
+            ViewBag.Erreur = "Merci de remplir tous les champs obligatoires (email valide).";
+            return View();
+        }
+
+        var erreurMotDePasse = PasswordHelper.ValiderComplexite(motdepasse);
+        if (erreurMotDePasse != null)
+        {
+            ViewBag.Erreur = erreurMotDePasse;
+            return View();
+        }
+
+        if (motdepasse != motdepasseConfirmation)
+        {
+            ViewBag.Erreur = "Le mot de passe et sa confirmation ne correspondent pas.";
             return View();
         }
 

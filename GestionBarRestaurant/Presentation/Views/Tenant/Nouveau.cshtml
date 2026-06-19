@@ -18,7 +18,7 @@
             <input type="hidden" asp-for="Id" />
             <div class="row g-3">
                 <div class="col-md-6"><label asp-for="Nom" class="form-label"></label><input asp-for="Nom" class="form-control" /><span asp-validation-for="Nom" class="text-danger"></span></div>
-                <div class="col-md-3"><label asp-for="Code" class="form-label"></label><input asp-for="Code" class="form-control" /><span asp-validation-for="Code" class="text-danger"></span></div>
+                <div class="col-md-3"><label asp-for="Code" class="form-label"></label><input asp-for="Code" class="form-control" placeholder="Auto si vide" /><div class="form-text">Facultatif : généré automatiquement si laissé vide.</div><span asp-validation-for="Code" class="text-danger"></span></div>
                 <div class="col-md-3"><label asp-for="CouleurPrincipale" class="form-label">Couleur</label><input asp-for="CouleurPrincipale" type="color" class="form-control form-control-color" /></div>
                 <div class="col-md-6"><label asp-for="Telephone" class="form-label"></label><input asp-for="Telephone" class="form-control" /></div>
                 <div class="col-md-6"><label asp-for="Adresse" class="form-label"></label><input asp-for="Adresse" class="form-control" /></div>

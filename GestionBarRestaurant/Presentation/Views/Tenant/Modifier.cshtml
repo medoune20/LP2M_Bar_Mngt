@@ -21,7 +21,7 @@
             <h6 class="fw-bold text-muted mb-3"><i class="bi bi-shop me-1"></i> Identité</h6>
             <div class="row g-3">
                 <div class="col-md-6"><label asp-for="Nom" class="form-label"></label><input asp-for="Nom" class="form-control" /><span asp-validation-for="Nom" class="text-danger"></span></div>
-                <div class="col-md-3"><label asp-for="Code" class="form-label"></label><input asp-for="Code" class="form-control" /><span asp-validation-for="Code" class="text-danger"></span></div>
+                <div class="col-md-3"><label asp-for="Code" class="form-label"></label><input asp-for="Code" class="form-control" placeholder="Auto si vide" /><div class="form-text">Facultatif : généré automatiquement si laissé vide.</div><span asp-validation-for="Code" class="text-danger"></span></div>
                 <div class="col-md-3"><label asp-for="CouleurPrincipale" class="form-label">Couleur</label><input asp-for="CouleurPrincipale" type="color" class="form-control form-control-color" /></div>
                 <div class="col-md-8"><label asp-for="Slogan" class="form-label"></label><input asp-for="Slogan" class="form-control" placeholder="Ex. : La référence des bonnes soirées" /></div>
                 <div class="col-md-4">

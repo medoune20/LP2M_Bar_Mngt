@@ -149,9 +149,9 @@ public class ProduitController : BaseController
     }
 
     [HttpPost]
-    public IActionResult MiseAJourMasse(int[] ids, decimal? prixVente, int? stockMinimum, string? categorie, string? actionMasse)
+    public IActionResult MiseAJourMasse(int[]? ids, decimal? prixVente, int? stockMinimum, string? categorie, string? actionMasse)
     {
-        if (ids.Length == 0)
+        if (ids == null || ids.Length == 0)
         {
             TempData["Erreur"] = "Veuillez sélectionner au moins un produit.";
             return RedirectToAction(nameof(Index));

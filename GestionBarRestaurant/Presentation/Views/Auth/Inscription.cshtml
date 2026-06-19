@@ -46,7 +46,16 @@
                 <div class="mb-2"><label class="form-label">Votre nom complet</label><input name="nomComplet" class="form-control" required /></div>
                 <div class="mb-2"><label class="form-label">Email</label><input name="email" type="email" class="form-control" required /></div>
                 <div class="mb-2"><label class="form-label">Identifiant de connexion</label><input name="login" class="form-control" autocomplete="username" required /></div>
-                <div class="mb-3"><label class="form-label">Mot de passe (6 caractères min.)</label><input name="motdepasse" type="password" class="form-control" autocomplete="new-password" required /></div>
+                <div class="mb-2">
+                    <label class="form-label">Mot de passe</label>
+                    <input name="motdepasse" id="motdepasse" type="password" class="form-control" autocomplete="new-password" minlength="8" required />
+                    <div class="form-text">Au moins 8 caractères, avec une majuscule, une minuscule, un chiffre et un caractère spécial.</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Confirmer le mot de passe</label>
+                    <input name="motdepasseConfirmation" id="motdepasseConfirmation" type="password" class="form-control" autocomplete="new-password" required />
+                    <div class="form-text text-danger d-none" id="erreurConfirmation">Les deux mots de passe ne correspondent pas.</div>
+                </div>
                 <button type="submit" class="btn btn-primary btn-lg w-100">Créer ma demande</button>
             </form>
 
@@ -55,5 +64,20 @@
             </div>
         </div>
     </div>
+    <script>
+        (function () {
+            var mdp = document.getElementById('motdepasse');
+            var conf = document.getElementById('motdepasseConfirmation');
+            var msg = document.getElementById('erreurConfirmation');
+            if (!mdp || !conf) return;
+            function verifier() {
+                var differe = conf.value.length > 0 && conf.value !== mdp.value;
+                conf.setCustomValidity(differe ? 'Les deux mots de passe ne correspondent pas.' : '');
+                if (msg) msg.classList.toggle('d-none', !differe);
+            }
+            mdp.addEventListener('input', verifier);
+            conf.addEventListener('input', verifier);
+        })();
+    </script>
 </body>
 </html>

@@ -6,11 +6,13 @@ public class Tenant
 {
     public int Id { get; set; }
 
-    [Required(ErrorMessage = "Le nom du tenant est obligatoire")]
+    [Required(ErrorMessage = "Le nom de l'établissement est obligatoire")]
     [Display(Name = "Nom de l'établissement")]
     public string Nom { get; set; } = string.Empty;
 
-    [Required(ErrorMessage = "Le code est obligatoire")]
+    // Le code est facultatif dans le formulaire : il est généré automatiquement
+    // s'il est laissé vide (voir TenantController.NormaliserTenant).
+    [Display(Name = "Code")]
     public string Code { get; set; } = string.Empty;
 
     public string Telephone { get; set; } = string.Empty;
