@@ -156,18 +156,62 @@ public class ProduitController : BaseController
             TempData["Erreur"] = "Veuillez sélectionner au moins un produit.";
             return RedirectToAction(nameof(Index));
         }
-        var produits = _db.Produits.Where(p => p.TenantId == TenantId && ids.Contains(p.Id)).ToList();
-        foreach (var produit in produits)
+
+        if (!PeutModifier("produits"))
         {
-            if (prixVente.HasValue && prixVente.Value >= 0) produit.PrixVente = prixVente.Value;
-            if (stockMinimum.HasValue && stockMinimum.Value >= 0) produit.StockMinimum = stockMinimum.Value;
-            if (!string.IsNullOrWhiteSpace(categorie)) produit.Categorie = categorie.Trim();
-            if (actionMasse == "activer") produit.Actif = true;
-            else if (actionMasse == "desactiver") produit.Actif = false;
+            TempData["Erreur"] = "Vous n'avez pas le droit de modifier les produits.";
+            return RedirectToAction(nameof(Index));
         }
-        _db.SaveChanges();
-        TempData["Succes"] = $"{produits.Count} produit(s) mis à jour en masse.";
+
+        var categorieNorm = (categorie ?? string.Empty).Trim();
+        var prixDemande = prixVente.HasValue && prixVente.Value >= 0;
+        var stockDemande = stockMinimum.HasValue && stockMinimum.Value >= 0;
+        var actionDemandee = string.Equals(actionMasse, "activer", StringComparison.OrdinalIgnoreCase)
+                             || string.Equals(actionMasse, "desactiver", StringComparison.OrdinalIgnoreCase);
+
+        if (!prixDemande && !stockDemande && categorieNorm.Length == 0 && !actionDemandee)
+        {
+            TempData["Erreur"] = "Aucune valeur à appliquer : renseignez un prix, un stock minimum, une catégorie ou une action.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        try
+        {
+            var idsUniques = ids.Distinct().ToArray();
+            var produits = _db.Produits.Where(p => p.TenantId == TenantId && idsUniques.Contains(p.Id)).ToList();
+            if (produits.Count == 0)
+            {
+                TempData["Erreur"] = "Aucun produit ne correspond à la sélection.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            foreach (var produit in produits)
+            {
+                if (prixDemande) produit.PrixVente = decimal.Round(prixVente!.Value, 2);
+                if (stockDemande) produit.StockMinimum = stockMinimum!.Value;
+                if (categorieNorm.Length > 0) produit.Categorie = categorieNorm;
+                if (string.Equals(actionMasse, "activer", StringComparison.OrdinalIgnoreCase)) produit.Actif = true;
+                else if (string.Equals(actionMasse, "desactiver", StringComparison.OrdinalIgnoreCase)) produit.Actif = false;
+            }
+
+            _db.SaveChanges();
+            TempData["Succes"] = $"{produits.Count} produit(s) mis à jour en masse.";
+        }
+        catch (Exception ex)
+        {
+            // On évite un 500 opaque : l'action est réservée aux gestionnaires,
+            // on leur affiche la cause réelle (base en lecture seule, donnée invalide, etc.).
+            TempData["Erreur"] = "La mise à jour en masse a échoué : " + MessageErreurInterne(ex);
+        }
+
         return RedirectToAction(nameof(Index));
+    }
+
+    private static string MessageErreurInterne(Exception ex)
+    {
+        var courant = ex;
+        while (courant.InnerException != null) courant = courant.InnerException;
+        return courant.Message;
     }
 
     [HttpGet]
