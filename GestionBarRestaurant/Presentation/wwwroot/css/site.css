@@ -3523,91 +3523,165 @@ main.container-fluid {
     .card form > .mt-4:last-child { position: static; margin-top: 18px !important; }
 }
 
-/* =========================================================
-   PC / DESKTOP : menu en panneau latéral gauche (vertical)
-   Sur grand écran, la barre de navigation devient une colonne
-   fixée à gauche ; le contenu principal est décalé à droite.
-   ========================================================= */
-@media (min-width: 992px) {
-    :root { --sidebar-w: 252px; }
-
-    .app-navbar.sticky-top {
-        position: fixed;
-        top: 0;
-        left: 0;
-        bottom: 0;
-        width: var(--sidebar-w);
-        height: 100vh;
-        min-height: 100vh;
-        overflow-y: auto;
-        overflow-x: hidden;
-        z-index: 1040;
-        background: linear-gradient(180deg, #0f172a, var(--app-primary));
-        box-shadow: 2px 0 18px rgba(15, 70, 196, .18);
-    }
-    .app-navbar > .container-fluid {
-        flex-direction: column;
-        align-items: stretch;
-        flex-wrap: nowrap;
-        height: 100%;
-        padding: 16px 12px !important;
-        gap: 10px;
-    }
-    .app-navbar .navbar-brand {
-        white-space: normal;
-        font-size: 1.1rem;
-    }
-    .tenant-pill {
-        max-width: 100% !important;
-        width: 100%;
-    }
-    .app-navbar .navbar-collapse {
-        display: flex !important;
-        flex-direction: column;
-        align-items: stretch;
-        flex: 1 1 auto;
-        min-height: 0;
-        overflow-y: auto;
-        width: 100%;
-    }
-    .app-navbar .navbar-nav {
-        flex-direction: column;
-        flex-wrap: nowrap;
-        align-items: stretch;
-        width: 100%;
-        overflow: visible;
-        gap: 2px;
-        margin-bottom: auto;
-        padding: 8px 0;
-    }
-    .app-navbar .nav-item { width: 100%; flex: 0 0 auto; }
-    .app-navbar .nav-link {
-        width: 100%;
-        justify-content: flex-start;
-        white-space: nowrap;
-        padding: 9px 12px !important;
-        font-size: .92rem;
-    }
-    .app-navbar .nav-link i {
-        margin-right: 9px !important;
-        font-size: 1.02rem;
-    }
-    .app-navbar .nav-link span,
-    .app-navbar .nav-link .menu-text { display: inline !important; }
-    .navbar-text {
-        max-width: 100%;
-        margin: 8px 0;
-        white-space: normal;
-    }
-    .app-navbar .navbar-collapse > form { width: 100%; }
-    .app-navbar .navbar-collapse > form .btn { width: 100%; }
-
-    main.container-fluid {
-        margin-left: var(--sidebar-w);
-        width: auto;
-        max-width: calc(100vw - var(--sidebar-w));
-    }
-    .form-actions-top,
-    .form-actions-sticky,
-    .card form > .mt-4:last-child { top: 12px; }
+/* =========================================================================
+   LP2M APPS — habillage Microsoft 365 / Fluent
+   Header haut (marque + utilisateur/déconnexion à droite) + barre latérale
+   gauche, le tout responsive. Le contenu s'adapte à la taille de la fenêtre.
+   ========================================================================= */
+:root {
+    --lp2m-topbar-h: 56px;
+    --lp2m-sidebar-w: 248px;
+    --lp2m-accent: var(--app-primary, #165DFF);
+    --lp2m-surface: #faf9f8;
+    --lp2m-border: #e1dfdd;
+    --lp2m-text: #323130;
+    --lp2m-text-soft: #605e5c;
 }
+
+body.lp2m-app, body.lp2m-public {
+    font-family: "Segoe UI", "Segoe UI Web (West European)", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* ---- Barre supérieure (suite bar M365) ---- */
+.lp2m-topbar {
+    position: fixed;
+    inset: 0 0 auto 0;
+    height: var(--lp2m-topbar-h);
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: 0 .9rem;
+    background: var(--lp2m-accent);
+    color: #fff;
+    z-index: 1045; /* sous les modales Bootstrap (1050/1055) */
+    box-shadow: 0 1.6px 3.6px rgba(0,0,0,.13), 0 .3px .9px rgba(0,0,0,.10);
+}
+.lp2m-burger { background: transparent; border: 0; color: #fff; font-size: 1.5rem; line-height: 1; padding: .1rem .35rem; cursor: pointer; }
+.lp2m-brand { display: inline-flex; align-items: center; gap: .5rem; color: #fff; text-decoration: none; font-weight: 700; font-size: 1.05rem; letter-spacing: .2px; }
+.lp2m-brand i { font-size: 1.2rem; }
+.lp2m-brand:hover { color: #fff; opacity: .92; }
+.lp2m-topbar .tenant-pill { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.32); color: #fff; }
+.lp2m-topbar-right { margin-left: auto; display: flex; align-items: center; gap: .5rem; }
+.lp2m-user { display: inline-flex; align-items: center; gap: .4rem; color: #fff; font-weight: 600; font-size: .9rem; max-width: 38vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lp2m-user i { font-size: 1.25rem; }
+.lp2m-logout { background: rgba(255,255,255,.16); color: #fff; border: 1px solid rgba(255,255,255,.34); font-weight: 600; }
+.lp2m-logout:hover { background: rgba(255,255,255,.30); color: #fff; }
+
+/* ---- Barre latérale de navigation ---- */
+.lp2m-sidebar {
+    position: fixed;
+    top: var(--lp2m-topbar-h);
+    left: 0;
+    bottom: 0;
+    width: var(--lp2m-sidebar-w);
+    background: var(--lp2m-surface);
+    border-right: 1px solid var(--lp2m-border);
+    overflow-y: auto;
+    overflow-x: hidden;
+    z-index: 1040;
+    padding: .5rem;
+}
+.lp2m-nav { display: flex; flex-direction: column; gap: 2px; }
+.lp2m-nav-sep { margin: .6rem .25rem .2rem; font-size: .68rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--lp2m-text-soft); }
+.lp2m-link {
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    padding: .55rem .7rem;
+    border-radius: 6px;
+    border-left: 3px solid transparent;
+    color: #3b3a39;
+    text-decoration: none;
+    font-size: .92rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+.lp2m-link i { font-size: 1.05rem; color: var(--lp2m-accent); width: 1.25rem; text-align: center; flex: 0 0 auto; }
+.lp2m-link span { overflow: hidden; text-overflow: ellipsis; }
+.lp2m-link:hover { background: #f3f2f1; color: #201f1e; }
+.lp2m-link.actif { background: #eff6fc; color: var(--lp2m-accent); border-left-color: var(--lp2m-accent); font-weight: 600; }
+
+/* ---- Zone de contenu ---- */
+.lp2m-app main.lp2m-main {
+    margin-top: var(--lp2m-topbar-h);
+    padding: 1.35rem clamp(.85rem, 2vw, 2rem) 2rem;
+    min-height: calc(100vh - var(--lp2m-topbar-h));
+}
+.lp2m-public main.lp2m-main { padding: 0; }
+
+.lp2m-backdrop { display: none; }
+
+@media (min-width: 992px) {
+    .lp2m-app main.lp2m-main {
+        margin-left: var(--lp2m-sidebar-w);
+        max-width: calc(100vw - var(--lp2m-sidebar-w));
+    }
+    /* La caisse rapide (shell POS) force max-width:none : on réimpose la largeur
+       disponible (écran moins barre latérale) pour éviter le débordement horizontal
+       qui coupait le panneau Ticket à droite. */
+    body.lp2m-app:has(.gbpos32-shell) main.lp2m-main.container-fluid,
+    body.lp2m-app:has(.pospro-shell) main.lp2m-main.container-fluid,
+    body.lp2m-app:has(.m365pos-shell) main.lp2m-main.container-fluid,
+    body.lp2m-app:has(.clyo-pos) main.lp2m-main.container-fluid {
+        max-width: calc(100vw - var(--lp2m-sidebar-w)) !important;
+        margin-left: var(--lp2m-sidebar-w) !important;
+        overflow-x: hidden;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .lp2m-sidebar {
+        width: 270px;
+        transform: translateX(-100%);
+        transition: transform .22s ease;
+        box-shadow: 2px 0 18px rgba(0,0,0,.20);
+    }
+    body.sidebar-open .lp2m-sidebar { transform: none; }
+    body.sidebar-open .lp2m-backdrop {
+        display: block;
+        position: fixed;
+        inset: var(--lp2m-topbar-h) 0 0 0;
+        background: rgba(0,0,0,.38);
+        z-index: 1035;
+    }
+    .lp2m-app main.lp2m-main { margin-left: 0; max-width: 100%; padding-bottom: 84px; }
+}
+
+/* ---- Touches Fluent sur les contrôles (cohérence M365) ---- */
+body.lp2m-app .card,
+body.lp2m-public .card {
+    border-radius: 8px;
+    border: 1px solid var(--lp2m-border);
+    box-shadow: 0 1.6px 3.6px rgba(0,0,0,.10), 0 .3px .9px rgba(0,0,0,.07);
+}
+body.lp2m-app .btn { border-radius: 4px; font-weight: 600; }
+body.lp2m-app .btn-primary { background: var(--lp2m-accent); border-color: var(--lp2m-accent); }
+body.lp2m-app .form-control,
+body.lp2m-app .form-select {
+    border-radius: 4px;
+    border-color: #8a8886;
+}
+body.lp2m-app .form-control:focus,
+body.lp2m-app .form-select:focus {
+    border-color: var(--lp2m-accent);
+    box-shadow: 0 0 0 1px var(--lp2m-accent);
+}
+body.lp2m-app .table > thead th {
+    background: var(--lp2m-surface);
+    color: var(--lp2m-text-soft);
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+.lp2m-app h1, .lp2m-app .h1 { font-size: clamp(1.4rem, 2.4vw, 2rem); }
+.lp2m-app h2, .lp2m-app .h2 { font-size: clamp(1.2rem, 2vw, 1.6rem); }
+
+/* Les images et miniatures s'adaptent à leur conteneur. */
+.lp2m-app img { max-width: 100%; height: auto; }
+.lp2m-app .product-thumb { object-fit: cover; }
+
+@media print {
+    .lp2m-topbar, .lp2m-sidebar, .lp2m-backdrop, .mobile-bottom-nav { display: none !important; }
+    .lp2m-app main.lp2m-main { margin: 0 !important; max-width: 100% !important; padding: 0 !important; }
+}
+
