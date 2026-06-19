@@ -3616,6 +3616,17 @@ body.lp2m-app, body.lp2m-public {
         margin-left: var(--lp2m-sidebar-w);
         max-width: calc(100vw - var(--lp2m-sidebar-w));
     }
+    /* La caisse rapide (shell POS) force max-width:none : on réimpose la largeur
+       disponible (écran moins barre latérale) pour éviter le débordement horizontal
+       qui coupait le panneau Ticket à droite. */
+    body.lp2m-app:has(.gbpos32-shell) main.lp2m-main.container-fluid,
+    body.lp2m-app:has(.pospro-shell) main.lp2m-main.container-fluid,
+    body.lp2m-app:has(.m365pos-shell) main.lp2m-main.container-fluid,
+    body.lp2m-app:has(.clyo-pos) main.lp2m-main.container-fluid {
+        max-width: calc(100vw - var(--lp2m-sidebar-w)) !important;
+        margin-left: var(--lp2m-sidebar-w) !important;
+        overflow-x: hidden;
+    }
 }
 
 @media (max-width: 991.98px) {
