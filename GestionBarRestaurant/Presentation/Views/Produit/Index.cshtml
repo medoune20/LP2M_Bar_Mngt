@@ -71,10 +71,7 @@
                         <td>@(p.Actif ? "Actif" : "Inactif")</td>
                         <td class="text-end">
                             <a asp-action="Modifier" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Modifier</a>
-                            <form asp-action="Supprimer" asp-route-id="@p.Id" method="post" class="d-inline">
-                                @Html.AntiForgeryToken()
-                                <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Désactiver ce produit ?')">Désactiver</button>
-                            </form>
+                            <button type="submit" form="suppr-@p.Id" class="btn btn-sm btn-outline-danger" onclick="return confirm('Désactiver ce produit ?')">Désactiver</button>
                         </td>
                     </tr>
                 }
@@ -83,6 +80,15 @@
         </div>
     </div>
 </form>
+
+@* Formulaires de désactivation hors du formulaire de masse : éviter l'imbrication de
+   <form> qui cassait la sélection des cases à cocher (erreur 500 en mise à jour de masse). *@
+@foreach (var p in Model)
+{
+    <form id="suppr-@p.Id" asp-action="Supprimer" asp-route-id="@p.Id" method="post" class="d-none">
+        @Html.AntiForgeryToken()
+    </form>
+}
 
 @section Scripts {
 <script>

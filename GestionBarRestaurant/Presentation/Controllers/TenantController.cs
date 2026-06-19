@@ -186,9 +186,25 @@ public class TenantController : BaseController
     {
         tenant.Nom = (tenant.Nom ?? string.Empty).Trim();
         tenant.Code = (tenant.Code ?? string.Empty).Trim().ToUpperInvariant();
+        // Le code n'est plus obligatoire dans le formulaire : on le génère
+        // automatiquement à partir du nom lorsqu'il est laissé vide.
+        if (string.IsNullOrWhiteSpace(tenant.Code))
+        {
+            tenant.Code = GenererCodeTenant(tenant.Nom);
+        }
         tenant.Telephone = (tenant.Telephone ?? string.Empty).Trim();
         tenant.Adresse = (tenant.Adresse ?? string.Empty).Trim();
         tenant.CouleurPrincipale = string.IsNullOrWhiteSpace(tenant.CouleurPrincipale) ? "#165DFF" : tenant.CouleurPrincipale.Trim();
+    }
+
+    private string GenererCodeTenant(string baseName)
+    {
+        var source = string.IsNullOrWhiteSpace(baseName) ? "BAR" : baseName;
+        var codeBase = new string((source.ToUpperInvariant() + "0000").Where(char.IsLetterOrDigit).ToArray());
+        var prefixe = codeBase.Length >= 4 ? codeBase[..4] : codeBase;
+        var code = prefixe + DateTime.Now.ToString("HHmmssfff");
+        while (_db.Tenants.Any(t => t.Code == code)) code = prefixe + DateTime.Now.Ticks.ToString()[^6..];
+        return code;
     }
 
     private void ValiderCodeUnique(string code, int tenantId)

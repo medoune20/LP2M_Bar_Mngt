@@ -70,4 +70,36 @@ public static class PasswordHelper
         return !string.IsNullOrWhiteSpace(valeur)
             && valeur.StartsWith($"{Prefix}$", StringComparison.Ordinal);
     }
+
+    /// <summary>
+    /// Longueur minimale exigée pour un mot de passe robuste.
+    /// </summary>
+    public const int LongueurMinimale = 8;
+
+    /// <summary>
+    /// Vérifie la complexité d'un mot de passe : au moins 8 caractères, avec une
+    /// majuscule, une minuscule, un chiffre et un caractère spécial.
+    /// Retourne <c>null</c> si le mot de passe est conforme, sinon un message d'erreur.
+    /// </summary>
+    public static string? ValiderComplexite(string? motDePasse)
+    {
+        motDePasse ??= string.Empty;
+
+        if (motDePasse.Length < LongueurMinimale)
+            return $"Le mot de passe doit contenir au moins {LongueurMinimale} caractères.";
+
+        if (!motDePasse.Any(char.IsUpper))
+            return "Le mot de passe doit contenir au moins une lettre majuscule.";
+
+        if (!motDePasse.Any(char.IsLower))
+            return "Le mot de passe doit contenir au moins une lettre minuscule.";
+
+        if (!motDePasse.Any(char.IsDigit))
+            return "Le mot de passe doit contenir au moins un chiffre.";
+
+        if (motDePasse.All(char.IsLetterOrDigit))
+            return "Le mot de passe doit contenir au moins un caractère spécial (ex. ! @ # $ % ...).";
+
+        return null;
+    }
 }

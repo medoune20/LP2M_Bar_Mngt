@@ -33,7 +33,7 @@ public class UtilisateurController : BaseController
     }
 
     [HttpPost]
-    public IActionResult Nouveau(Utilisateur utilisateur)
+    public IActionResult Nouveau(Utilisateur utilisateur, string? motDePasseConfirmation)
     {
         utilisateur.Login = (utilisateur.Login ?? string.Empty).Trim();
         utilisateur.Nom = (utilisateur.Nom ?? string.Empty).Trim();
@@ -45,7 +45,7 @@ public class UtilisateurController : BaseController
         }
 
         AlignerRoleEtProfil(utilisateur);
-        ValiderUtilisateur(utilisateur, nouveau: true);
+        ValiderUtilisateur(utilisateur, nouveau: true, motDePasseConfirmation);
 
         if (!ModelState.IsValid)
         {
@@ -77,7 +77,7 @@ public class UtilisateurController : BaseController
     }
 
     [HttpPost]
-    public IActionResult Modifier(Utilisateur utilisateur)
+    public IActionResult Modifier(Utilisateur utilisateur, string? motDePasseConfirmation)
     {
         utilisateur.Login = (utilisateur.Login ?? string.Empty).Trim();
         utilisateur.Nom = (utilisateur.Nom ?? string.Empty).Trim();
@@ -86,7 +86,7 @@ public class UtilisateurController : BaseController
         if (existant == null) return NotFound();
 
         AlignerRoleEtProfil(utilisateur);
-        ValiderUtilisateur(utilisateur, nouveau: false);
+        ValiderUtilisateur(utilisateur, nouveau: false, motDePasseConfirmation);
 
         if (!ModelState.IsValid)
         {
@@ -155,7 +155,7 @@ public class UtilisateurController : BaseController
         utilisateur.ProfilAccesId = DatabaseInitializer.IdProfil(_db, utilisateur.TenantId, utilisateur.Role);
     }
 
-    private void ValiderUtilisateur(Utilisateur utilisateur, bool nouveau)
+    private void ValiderUtilisateur(Utilisateur utilisateur, bool nouveau, string? motDePasseConfirmation = null)
     {
         if (string.IsNullOrWhiteSpace(utilisateur.Nom))
         {
@@ -172,9 +172,17 @@ public class UtilisateurController : BaseController
             ModelState.AddModelError(nameof(Utilisateur.MotDePasse), "Le mot de passe est obligatoire.");
         }
 
-        if (!string.IsNullOrWhiteSpace(utilisateur.MotDePasse) && utilisateur.MotDePasse.Length < 6)
+        if (!string.IsNullOrWhiteSpace(utilisateur.MotDePasse))
         {
-            ModelState.AddModelError(nameof(Utilisateur.MotDePasse), "Le mot de passe doit contenir au moins 6 caractères.");
+            var erreurMotDePasse = PasswordHelper.ValiderComplexite(utilisateur.MotDePasse);
+            if (erreurMotDePasse != null)
+            {
+                ModelState.AddModelError(nameof(Utilisateur.MotDePasse), erreurMotDePasse);
+            }
+            else if (motDePasseConfirmation != null && utilisateur.MotDePasse != motDePasseConfirmation)
+            {
+                ModelState.AddModelError(nameof(Utilisateur.MotDePasse), "Le mot de passe et sa confirmation ne correspondent pas.");
+            }
         }
 
         if (_db.Utilisateurs.Any(u => u.Id != utilisateur.Id && u.Login.ToLower() == utilisateur.Login.ToLower()))

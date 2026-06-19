@@ -168,7 +168,7 @@ body {
 @media print {
     body { background: white !important; }
     .no-print, .app-navbar, .alert { display: none !important; }
-    main { padding: 0 !important; }
+    main { padding: 0 !important; margin-left: 0 !important; max-width: 100% !important; }
     .ticket-print { box-shadow: none !important; border: none !important; max-width: 80mm; font-size: 12px; }
     .ticket-print .card-body { padding: 0; }
     .table { font-size: 11px; }
@@ -3521,4 +3521,93 @@ main.container-fluid {
     .form-actions-top,
     .form-actions-sticky,
     .card form > .mt-4:last-child { position: static; margin-top: 18px !important; }
+}
+
+/* =========================================================
+   PC / DESKTOP : menu en panneau latéral gauche (vertical)
+   Sur grand écran, la barre de navigation devient une colonne
+   fixée à gauche ; le contenu principal est décalé à droite.
+   ========================================================= */
+@media (min-width: 992px) {
+    :root { --sidebar-w: 252px; }
+
+    .app-navbar.sticky-top {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: var(--sidebar-w);
+        height: 100vh;
+        min-height: 100vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 1040;
+        background: linear-gradient(180deg, #0f172a, var(--app-primary));
+        box-shadow: 2px 0 18px rgba(15, 70, 196, .18);
+    }
+    .app-navbar > .container-fluid {
+        flex-direction: column;
+        align-items: stretch;
+        flex-wrap: nowrap;
+        height: 100%;
+        padding: 16px 12px !important;
+        gap: 10px;
+    }
+    .app-navbar .navbar-brand {
+        white-space: normal;
+        font-size: 1.1rem;
+    }
+    .tenant-pill {
+        max-width: 100% !important;
+        width: 100%;
+    }
+    .app-navbar .navbar-collapse {
+        display: flex !important;
+        flex-direction: column;
+        align-items: stretch;
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        width: 100%;
+    }
+    .app-navbar .navbar-nav {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: stretch;
+        width: 100%;
+        overflow: visible;
+        gap: 2px;
+        margin-bottom: auto;
+        padding: 8px 0;
+    }
+    .app-navbar .nav-item { width: 100%; flex: 0 0 auto; }
+    .app-navbar .nav-link {
+        width: 100%;
+        justify-content: flex-start;
+        white-space: nowrap;
+        padding: 9px 12px !important;
+        font-size: .92rem;
+    }
+    .app-navbar .nav-link i {
+        margin-right: 9px !important;
+        font-size: 1.02rem;
+    }
+    .app-navbar .nav-link span,
+    .app-navbar .nav-link .menu-text { display: inline !important; }
+    .navbar-text {
+        max-width: 100%;
+        margin: 8px 0;
+        white-space: normal;
+    }
+    .app-navbar .navbar-collapse > form { width: 100%; }
+    .app-navbar .navbar-collapse > form .btn { width: 100%; }
+
+    main.container-fluid {
+        margin-left: var(--sidebar-w);
+        width: auto;
+        max-width: calc(100vw - var(--sidebar-w));
+    }
+    .form-actions-top,
+    .form-actions-sticky,
+    .card form > .mt-4:last-child { top: 12px; }
 }
