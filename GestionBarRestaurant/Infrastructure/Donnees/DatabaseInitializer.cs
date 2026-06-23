@@ -402,6 +402,8 @@ CREATE TABLE IF NOT EXISTS ""MessagesChat"" (
         db.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_MessagesChat_TenantId_DateEnvoi"" ON ""MessagesChat"" (""TenantId"", ""DateEnvoi"");");
 
         AjouterColonneSiAbsente(db, "Utilisateurs", "DerniereLectureChatId", "INTEGER NOT NULL DEFAULT 0");
+        AjouterColonneSiAbsente(db, "Utilisateurs", "TokenReset", "TEXT NOT NULL DEFAULT ''");
+        AjouterColonneSiAbsente(db, "Utilisateurs", "TokenResetExpiration", "TEXT NULL");
 
         // --- Comptabilité OHADA ---
         db.Database.ExecuteSqlRaw(@"
