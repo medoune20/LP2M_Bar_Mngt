@@ -279,6 +279,95 @@ public class AuthController : Controller
         return RedirectToAction(nameof(Connexion));
     }
 
+    [HttpGet]
+    public IActionResult MotDePasseOublie() => View();
+
+    [HttpPost]
+    public IActionResult MotDePasseOublie(string identifiant)
+    {
+        identifiant = (identifiant ?? string.Empty).Trim();
+        var idMin = identifiant.ToLowerInvariant();
+
+        // Message générique systématique (anti-énumération de comptes).
+        const string messageGenerique = "Si un compte correspond, un email de réinitialisation vient d'être envoyé.";
+
+        var utilisateur = _db.Utilisateurs.FirstOrDefault(u =>
+            u.Login.ToLower() == idMin || (u.Email != "" && u.Email.ToLower() == idMin));
+
+        if (utilisateur != null && !string.IsNullOrWhiteSpace(utilisateur.Email))
+        {
+            var token = Guid.NewGuid().ToString("N");
+            utilisateur.TokenReset = token;
+            utilisateur.TokenResetExpiration = DateTime.Now.AddHours(1);
+            _db.SaveChanges();
+
+            var lien = $"{Request.Scheme}://{Request.Host}{Request.PathBase}/Auth/ReinitialiserMotDePasse?id={utilisateur.Id}&token={token}";
+            _email.Envoyer(utilisateur.Email, "Réinitialisation de votre mot de passe - LP2M APPS",
+                $"<p>Bonjour {utilisateur.Nom},</p>" +
+                "<p>Vous avez demandé à réinitialiser votre mot de passe.</p>" +
+                $"<p>Cliquez sur ce lien (valable 1 heure) : <a href='{lien}'>Réinitialiser mon mot de passe</a></p>" +
+                "<p>Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.</p>");
+        }
+
+        ViewBag.Succes = _email.EstConfigure
+            ? messageGenerique
+            : messageGenerique + " (Si vous ne recevez rien, contactez l'administrateur : l'envoi d'emails n'est pas configuré sur ce serveur.)";
+        return View();
+    }
+
+    [HttpGet]
+    public IActionResult ReinitialiserMotDePasse(int id, string token)
+    {
+        var utilisateur = TrouverPourReset(id, token);
+        if (utilisateur == null)
+        {
+            TempData["Erreur"] = "Lien de réinitialisation invalide ou expiré.";
+            return RedirectToAction(nameof(Connexion));
+        }
+        ViewBag.Id = id;
+        ViewBag.Token = token;
+        return View();
+    }
+
+    [HttpPost]
+    public IActionResult ReinitialiserMotDePasse(int id, string token, string motdepasse, string motdepasseConfirmation)
+    {
+        var utilisateur = TrouverPourReset(id, token);
+        if (utilisateur == null)
+        {
+            TempData["Erreur"] = "Lien de réinitialisation invalide ou expiré.";
+            return RedirectToAction(nameof(Connexion));
+        }
+
+        ViewBag.Id = id;
+        ViewBag.Token = token;
+        motdepasse ??= string.Empty;
+        motdepasseConfirmation ??= string.Empty;
+
+        var erreur = PasswordHelper.ValiderComplexite(motdepasse);
+        if (erreur != null) { ViewBag.Erreur = erreur; return View(); }
+        if (motdepasse != motdepasseConfirmation) { ViewBag.Erreur = "Le mot de passe et sa confirmation ne correspondent pas."; return View(); }
+
+        utilisateur.MotDePasse = PasswordHelper.Hasher(motdepasse);
+        utilisateur.TokenReset = string.Empty;
+        utilisateur.TokenResetExpiration = null;
+        utilisateur.TentativesEchouees = 0;
+        utilisateur.VerrouJusqua = null;
+        _db.SaveChanges();
+
+        TempData["Succes"] = "Mot de passe réinitialisé. Vous pouvez maintenant vous connecter.";
+        return RedirectToAction(nameof(Connexion));
+    }
+
+    private Utilisateur? TrouverPourReset(int id, string? token)
+    {
+        if (id <= 0 || string.IsNullOrWhiteSpace(token)) return null;
+        var u = _db.Utilisateurs.FirstOrDefault(x => x.Id == id);
+        if (u == null || string.IsNullOrEmpty(u.TokenReset) || u.TokenReset != token) return null;
+        if (u.TokenResetExpiration == null || u.TokenResetExpiration.Value < DateTime.Now) return null;
+        return u;
+    }
+
     [HttpPost]
     public IActionResult Deconnexion()
     {

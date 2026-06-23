@@ -43,4 +43,8 @@ public class Utilisateur
 
     /// <summary>Id du dernier message de la messagerie lu (badge de non-lus).</summary>
     public int DerniereLectureChatId { get; set; }
+
+    // --- Réinitialisation de mot de passe (« mot de passe oublié ») ---
+    public string TokenReset { get; set; } = string.Empty;
+    public DateTime? TokenResetExpiration { get; set; }
 }

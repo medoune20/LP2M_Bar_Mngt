@@ -60,60 +60,89 @@
 
     <aside class="lp2m-sidebar no-print">
         <nav class="lp2m-nav">
+            @{
+                var secVentes = voir("caisse_rapide") || voir("ventes") || voir("caisse");
+                var secCatalogue = voir("produits") || voir("categories") || voir("stock");
+                var secClients = voir("clients") || voir("fidelite");
+                var secFinances = voir("depenses") || voir("rapports") || voir("comptabilite") || voir("previsions") || voir("evaluation_caissiers");
+            }
+
+            <div class="lp2m-nav-sep">Pilotage</div>
             <a class="lp2m-link" asp-controller="Accueil" asp-action="Index"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
             <a class="lp2m-link" asp-controller="Chat" asp-action="Index"><i class="bi bi-chat-dots"></i><span>Messagerie</span><span class="js-chat-badge badge rounded-pill text-bg-danger ms-auto" hidden>0</span></a>
-            @if (voir("caisse_rapide"))
+
+            @if (secVentes)
             {
-                <a class="lp2m-link" asp-controller="Vente" asp-action="Rapide"><i class="bi bi-lightning-charge"></i><span>Caisse rapide</span></a>
+                <div class="lp2m-nav-sep">Ventes &amp; caisse</div>
+                @if (voir("caisse_rapide"))
+                {
+                    <a class="lp2m-link" asp-controller="Vente" asp-action="Rapide"><i class="bi bi-lightning-charge"></i><span>Caisse rapide</span></a>
+                }
+                @if (voir("ventes"))
+                {
+                    <a class="lp2m-link" asp-controller="Vente" asp-action="Index"><i class="bi bi-receipt"></i><span>Ventes</span></a>
+                }
+                @if (voir("caisse"))
+                {
+                    <a class="lp2m-link" asp-controller="Caisse" asp-action="Index"><i class="bi bi-cash-stack"></i><span>Caisse</span></a>
+                }
             }
-            @if (voir("ventes"))
+
+            @if (secCatalogue)
             {
-                <a class="lp2m-link" asp-controller="Vente" asp-action="Index"><i class="bi bi-receipt"></i><span>Ventes</span></a>
+                <div class="lp2m-nav-sep">Catalogue &amp; stock</div>
+                @if (voir("produits"))
+                {
+                    <a class="lp2m-link" asp-controller="Produit" asp-action="Index"><i class="bi bi-box-seam"></i><span>Produits</span></a>
+                }
+                @if (voir("categories"))
+                {
+                    <a class="lp2m-link" asp-controller="Categorie" asp-action="Index"><i class="bi bi-tags"></i><span>Catégories</span></a>
+                }
+                @if (voir("stock"))
+                {
+                    <a class="lp2m-link" asp-controller="Stock" asp-action="Index"><i class="bi bi-boxes"></i><span>Stock</span></a>
+                }
             }
-            @if (voir("caisse"))
+
+            @if (secClients)
             {
-                <a class="lp2m-link" asp-controller="Caisse" asp-action="Index"><i class="bi bi-cash-stack"></i><span>Caisse</span></a>
+                <div class="lp2m-nav-sep">Clients</div>
+                @if (voir("clients"))
+                {
+                    <a class="lp2m-link" asp-controller="Client" asp-action="Index"><i class="bi bi-person-lines-fill"></i><span>Clients</span></a>
+                }
+                @if (voir("fidelite"))
+                {
+                    <a class="lp2m-link" asp-controller="Fidelite" asp-action="Index"><i class="bi bi-stars"></i><span>Fidélité</span></a>
+                }
             }
-            @if (voir("produits"))
+
+            @if (secFinances)
             {
-                <a class="lp2m-link" asp-controller="Produit" asp-action="Index"><i class="bi bi-box-seam"></i><span>Produits</span></a>
+                <div class="lp2m-nav-sep">Finances &amp; analyses</div>
+                @if (voir("depenses"))
+                {
+                    <a class="lp2m-link" asp-controller="Depense" asp-action="Index"><i class="bi bi-coin"></i><span>Dépenses</span></a>
+                }
+                @if (voir("rapports"))
+                {
+                    <a class="lp2m-link" asp-controller="Rapport" asp-action="Index"><i class="bi bi-graph-up"></i><span>Rapports</span></a>
+                }
+                @if (voir("comptabilite"))
+                {
+                    <a class="lp2m-link" asp-controller="Comptabilite" asp-action="Index"><i class="bi bi-journal-text"></i><span>Comptabilité</span></a>
+                }
+                @if (voir("previsions"))
+                {
+                    <a class="lp2m-link" asp-controller="Prevision" asp-action="Index"><i class="bi bi-magic"></i><span>Prévisions</span></a>
+                }
+                @if (voir("evaluation_caissiers"))
+                {
+                    <a class="lp2m-link" asp-controller="EvaluationCaissier" asp-action="Index"><i class="bi bi-award"></i><span>Caissiers</span></a>
+                }
             }
-            @if (voir("categories"))
-            {
-                <a class="lp2m-link" asp-controller="Categorie" asp-action="Index"><i class="bi bi-tags"></i><span>Catégories</span></a>
-            }
-            @if (voir("stock"))
-            {
-                <a class="lp2m-link" asp-controller="Stock" asp-action="Index"><i class="bi bi-boxes"></i><span>Stock</span></a>
-            }
-            @if (voir("clients"))
-            {
-                <a class="lp2m-link" asp-controller="Client" asp-action="Index"><i class="bi bi-person-lines-fill"></i><span>Clients</span></a>
-            }
-            @if (voir("fidelite"))
-            {
-                <a class="lp2m-link" asp-controller="Fidelite" asp-action="Index"><i class="bi bi-stars"></i><span>Fidélité</span></a>
-            }
-            @if (voir("depenses"))
-            {
-                <a class="lp2m-link" asp-controller="Depense" asp-action="Index"><i class="bi bi-coin"></i><span>Dépenses</span></a>
-            }
-            @if (voir("rapports"))
-            {
-                <a class="lp2m-link" asp-controller="Rapport" asp-action="Index"><i class="bi bi-graph-up"></i><span>Rapports</span></a>
-            }
-            @if (voir("comptabilite"))
-            {
-                <a class="lp2m-link" asp-controller="Comptabilite" asp-action="Index"><i class="bi bi-journal-text"></i><span>Comptabilité</span></a>
-            }
-            @if (voir("previsions"))
-            {
-                <a class="lp2m-link" asp-controller="Prevision" asp-action="Index"><i class="bi bi-magic"></i><span>Prévisions</span></a>
-            }
-            @if (voir("evaluation_caissiers"))
-            {
-                <a class="lp2m-link" asp-controller="EvaluationCaissier" asp-action="Index"><i class="bi bi-award"></i><span>Caissiers</span></a>
-            }
+
             @if (estAdmin || isSuperAdmin)
             {
                 <div class="lp2m-nav-sep">Administration</div>
@@ -121,8 +150,10 @@
                 <a class="lp2m-link" asp-controller="Profil" asp-action="Index"><i class="bi bi-shield-lock"></i><span>Profils / rôles</span></a>
                 <a class="lp2m-link" asp-controller="Tenant" asp-action="Modifier" asp-route-id="@(Context.Session.GetInt32("TenantId"))"><i class="bi bi-shop"></i><span>Mon établissement</span></a>
             }
+
             @if (isSuperAdmin)
             {
+                <div class="lp2m-nav-sep">Super-admin</div>
                 <a class="lp2m-link" asp-controller="Tenant" asp-action="Demandes"><i class="bi bi-person-check"></i><span>Demandes d'inscription</span></a>
                 <a class="lp2m-link" asp-controller="Tenant" asp-action="Index"><i class="bi bi-buildings"></i><span>Tenants</span></a>
                 <a class="lp2m-link" asp-controller="Sauvegarde" asp-action="Index"><i class="bi bi-database-down"></i><span>Sauvegarde</span></a>
