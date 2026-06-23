@@ -21,6 +21,7 @@ public static class ModulesApp
         ("fidelite",           "Fidélité"),
         ("depenses",           "Dépenses"),
         ("rapports",           "Rapports"),
+        ("comptabilite",       "Comptabilité OHADA"),
         ("previsions",         "Prévisions"),
         ("evaluation_caissiers","Évaluation caissiers"),
         ("utilisateurs",       "Utilisateurs"),
@@ -31,10 +32,10 @@ public static class ModulesApp
     };
 
     public const string PermissionsAdministrateur =
-        "dashboard=CM;caisse_rapide=CM;ventes=CM;caisse=CM;produits=CM;categories=CM;stock=CM;clients=CM;fidelite=CM;depenses=CM;rapports=CM;previsions=CM;evaluation_caissiers=CM;utilisateurs=CM;profils=CM;tenants=CM;sauvegarde=CM;parametres=CM";
+        "dashboard=CM;caisse_rapide=CM;ventes=CM;caisse=CM;produits=CM;categories=CM;stock=CM;clients=CM;fidelite=CM;depenses=CM;rapports=CM;comptabilite=CM;previsions=CM;evaluation_caissiers=CM;utilisateurs=CM;profils=CM;tenants=CM;sauvegarde=CM;parametres=CM";
 
     public const string PermissionsManager =
-        "dashboard=C;caisse_rapide=CM;ventes=CM;caisse=CM;produits=CM;categories=CM;stock=CM;clients=CM;fidelite=CM;depenses=CM;rapports=C;previsions=C;evaluation_caissiers=C;parametres=C";
+        "dashboard=C;caisse_rapide=CM;ventes=CM;caisse=CM;produits=CM;categories=CM;stock=CM;clients=CM;fidelite=CM;depenses=CM;rapports=C;comptabilite=CM;previsions=C;evaluation_caissiers=C;parametres=C";
 
     public const string PermissionsCaissier =
         "dashboard=C;caisse_rapide=CM;ventes=C;caisse=C;produits=C;categories=C;stock=C;clients=C;fidelite=C";

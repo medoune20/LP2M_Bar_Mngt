@@ -29,6 +29,9 @@ builder.Services.AddScoped<Infrastructure.Services.EmailService>();
 // Messagerie temps réel (SignalR) cloisonnée par tenant.
 builder.Services.AddSignalR();
 
+// Comptabilité OHADA (moteur d'écritures + API d'interfaçage).
+builder.Services.AddScoped<Infrastructure.Services.ComptabiliteService>();
+
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
 var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 var googleConfigured = !string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret);
@@ -115,6 +118,9 @@ app.UseRouting();
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
+
+// API REST (contrôleurs à routage par attribut, ex. /api/v1/...).
+app.MapControllers();
 
 app.MapControllerRoute(name: "default", pattern: "{controller=Accueil}/{action=Index}/{id?}");
 

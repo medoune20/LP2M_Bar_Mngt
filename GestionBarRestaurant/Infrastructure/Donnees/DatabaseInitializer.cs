@@ -15,7 +15,7 @@ public static class DatabaseInitializer
     {
         "Tenants", "Utilisateurs", "Clients", "Produits", "Categories", "Ventes", "LignesVente",
         "Caisses", "MouvementsStock", "Depenses", "ReglesFidelite", "MouvementsFidelite",
-        "MouvementsCaisse", "ProfilsAcces", "MessagesChat"
+        "MouvementsCaisse", "ProfilsAcces", "MessagesChat", "ParametragesComptables", "ClesApi"
     };
 
     public static void Initialiser(AppDbContext db)
@@ -402,6 +402,43 @@ CREATE TABLE IF NOT EXISTS ""MessagesChat"" (
         db.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_MessagesChat_TenantId_DateEnvoi"" ON ""MessagesChat"" (""TenantId"", ""DateEnvoi"");");
 
         AjouterColonneSiAbsente(db, "Utilisateurs", "DerniereLectureChatId", "INTEGER NOT NULL DEFAULT 0");
+
+        // --- Comptabilité OHADA ---
+        db.Database.ExecuteSqlRaw(@"
+CREATE TABLE IF NOT EXISTS ""ParametragesComptables"" (
+    ""Id"" INTEGER NOT NULL CONSTRAINT ""PK_ParametragesComptables"" PRIMARY KEY AUTOINCREMENT,
+    ""TenantId"" INTEGER NOT NULL,
+    ""AssujettiTva"" INTEGER NOT NULL DEFAULT 1,
+    ""TauxTva"" REAL NOT NULL DEFAULT 18,
+    ""Devise"" TEXT NOT NULL DEFAULT 'XOF',
+    ""Exercice"" INTEGER NOT NULL DEFAULT 0,
+    ""CompteCaisse"" TEXT NOT NULL DEFAULT '571',
+    ""CompteBanque"" TEXT NOT NULL DEFAULT '521',
+    ""CompteClients"" TEXT NOT NULL DEFAULT '411',
+    ""CompteFournisseurs"" TEXT NOT NULL DEFAULT '401',
+    ""CompteVentes"" TEXT NOT NULL DEFAULT '701',
+    ""CompteTvaCollectee"" TEXT NOT NULL DEFAULT '4431',
+    ""CompteTvaDeductible"" TEXT NOT NULL DEFAULT '4452',
+    ""CompteAchats"" TEXT NOT NULL DEFAULT '601',
+    ""CompteCharges"" TEXT NOT NULL DEFAULT '627',
+    ""CompteApports"" TEXT NOT NULL DEFAULT '4711'
+);");
+        db.Database.ExecuteSqlRaw(@"CREATE UNIQUE INDEX IF NOT EXISTS ""IX_ParametragesComptables_TenantId"" ON ""ParametragesComptables"" (""TenantId"");");
+
+        db.Database.ExecuteSqlRaw(@"
+CREATE TABLE IF NOT EXISTS ""ClesApi"" (
+    ""Id"" INTEGER NOT NULL CONSTRAINT ""PK_ClesApi"" PRIMARY KEY AUTOINCREMENT,
+    ""TenantId"" INTEGER NOT NULL,
+    ""Libelle"" TEXT NOT NULL DEFAULT '',
+    ""Prefixe"" TEXT NOT NULL DEFAULT '',
+    ""CleHash"" TEXT NOT NULL DEFAULT '',
+    ""Scope"" TEXT NOT NULL DEFAULT 'lecture',
+    ""Actif"" INTEGER NOT NULL DEFAULT 1,
+    ""DateCreation"" TEXT NOT NULL,
+    ""DerniereUtilisation"" TEXT NULL
+);");
+        db.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_ClesApi_CleHash"" ON ""ClesApi"" (""CleHash"");");
+        db.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_ClesApi_TenantId"" ON ""ClesApi"" (""TenantId"");");
     }
 
     private static void AjouterColonneSiAbsente(AppDbContext db, string table, string colonne, string definition)

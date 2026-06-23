@@ -1,0 +1,56 @@
+@model RapportComptaVm
+@{
+    ViewData["Title"] = "Écritures comptables";
+    Func<decimal, string> fcfa = v => v == 0 ? "" : string.Format("{0:N0}", v);
+    var du = ViewBag.Du as string;
+    var au = ViewBag.Au as string;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="fw-bold mb-1">Journal des écritures</h1>
+        <p class="text-muted mb-0">SYSCOHADA — du @Model.Du.ToString("dd/MM/yyyy") au @Model.Au.ToString("dd/MM/yyyy")</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-action="Index" asp-route-du="@du" asp-route-au="@au"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+        <a class="btn btn-outline-primary" asp-action="ExportEcritures" asp-route-du="@du" asp-route-au="@au"><i class="bi bi-filetype-csv me-1"></i>Export CSV</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Date</th><th>Jrnl</th><th>Pièce</th><th>Compte</th><th>Intitulé</th><th>Libellé</th><th>Tiers</th>
+                    <th class="text-end">Débit</th><th class="text-end">Crédit</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Ecritures.Any())
+                {
+                    <tr><td colspan="9" class="text-center text-muted py-4">Aucune écriture sur la période.</td></tr>
+                }
+                @foreach (var e in Model.Ecritures)
+                {
+                    var premier = true;
+                    foreach (var l in e.Lignes)
+                    {
+                        <tr>
+                            <td>@(premier ? e.Date.ToString("dd/MM/yyyy") : "")</td>
+                            <td>@(premier ? e.Journal : "")</td>
+                            <td>@(premier ? e.Piece : "")</td>
+                            <td class="fw-semibold">@l.Compte</td>
+                            <td>@l.Intitule</td>
+                            <td>@(premier ? e.Libelle : "")</td>
+                            <td>@(premier ? e.Tiers : "")</td>
+                            <td class="text-end">@fcfa(l.Debit)</td>
+                            <td class="text-end">@fcfa(l.Credit)</td>
+                        </tr>
+                        premier = false;
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

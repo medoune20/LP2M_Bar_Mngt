@@ -102,6 +102,10 @@
             {
                 <a class="lp2m-link" asp-controller="Rapport" asp-action="Index"><i class="bi bi-graph-up"></i><span>Rapports</span></a>
             }
+            @if (voir("comptabilite"))
+            {
+                <a class="lp2m-link" asp-controller="Comptabilite" asp-action="Index"><i class="bi bi-journal-text"></i><span>Comptabilité</span></a>
+            }
             @if (voir("previsions"))
             {
                 <a class="lp2m-link" asp-controller="Prevision" asp-action="Index"><i class="bi bi-magic"></i><span>Prévisions</span></a>

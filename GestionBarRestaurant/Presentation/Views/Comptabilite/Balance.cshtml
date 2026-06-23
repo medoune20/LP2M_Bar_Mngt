@@ -1,0 +1,59 @@
+@model RapportComptaVm
+@{
+    ViewData["Title"] = "Balance";
+    Func<decimal, string> fcfa = v => v == 0 ? "" : string.Format("{0:N0}", v);
+    var du = ViewBag.Du as string;
+    var au = ViewBag.Au as string;
+    var totDebit = Model.Balance.Sum(b => b.TotalDebit);
+    var totCredit = Model.Balance.Sum(b => b.TotalCredit);
+    var totSd = Model.Balance.Sum(b => b.SoldeDebiteur);
+    var totSc = Model.Balance.Sum(b => b.SoldeCrediteur);
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="fw-bold mb-1">Balance générale</h1>
+        <p class="text-muted mb-0">SYSCOHADA — du @Model.Du.ToString("dd/MM/yyyy") au @Model.Au.ToString("dd/MM/yyyy")</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index" asp-route-du="@du" asp-route-au="@au"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Compte</th><th>Intitulé</th>
+                    <th class="text-end">Total débit</th><th class="text-end">Total crédit</th>
+                    <th class="text-end">Solde débiteur</th><th class="text-end">Solde créditeur</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Balance.Any())
+                {
+                    <tr><td colspan="6" class="text-center text-muted py-4">Aucun mouvement sur la période.</td></tr>
+                }
+                @foreach (var b in Model.Balance)
+                {
+                    <tr>
+                        <td class="fw-semibold">@b.Compte</td>
+                        <td>@b.Intitule</td>
+                        <td class="text-end">@fcfa(b.TotalDebit)</td>
+                        <td class="text-end">@fcfa(b.TotalCredit)</td>
+                        <td class="text-end">@fcfa(b.SoldeDebiteur)</td>
+                        <td class="text-end">@fcfa(b.SoldeCrediteur)</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="fw-bold border-top">
+                    <td colspan="2">Totaux</td>
+                    <td class="text-end">@string.Format("{0:N0}", totDebit)</td>
+                    <td class="text-end">@string.Format("{0:N0}", totCredit)</td>
+                    <td class="text-end">@string.Format("{0:N0}", totSd)</td>
+                    <td class="text-end">@string.Format("{0:N0}", totSc)</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>

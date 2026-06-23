@@ -1,0 +1,80 @@
+@model List<CleApi>
+@{
+    ViewData["Title"] = "Clés API";
+    var nouvelleCle = TempData["NouvelleCle"] as string;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1 class="fw-bold mb-1">Clés API — interfaçage comptable</h1>
+        <p class="text-muted mb-0">Pour brancher un outil ou un ERP externe sur <code>/api/v1/…</code> (en-tête <code>X-API-Key</code>).</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+</div>
+
+@if (!string.IsNullOrEmpty(nouvelleCle))
+{
+    <div class="alert alert-success">
+        <div class="fw-bold mb-1"><i class="bi bi-key me-1"></i>Nouvelle clé (copiez-la maintenant, elle ne sera plus affichée) :</div>
+        <code class="user-select-all">@nouvelleCle</code>
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="post" asp-action="CreerCle" class="row g-2 align-items-end">
+            @Html.AntiForgeryToken()
+            <div class="col-md-8"><label class="form-label">Libellé de la clé</label><input name="libelle" class="form-control" placeholder="Ex. Cabinet comptable, Odoo, Sage…" /></div>
+            <div class="col-md-4 d-grid"><button class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Générer une clé</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th>Libellé</th><th>Préfixe</th><th>Portée</th><th>Créée le</th><th>Dernière utilisation</th><th>Statut</th><th></th></tr></thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="7" class="text-center text-muted py-4">Aucune clé API.</td></tr>
+                }
+                @foreach (var c in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@c.Libelle</td>
+                        <td><code>@c.Prefixe…</code></td>
+                        <td>@c.Scope</td>
+                        <td>@c.DateCreation.ToString("dd/MM/yyyy")</td>
+                        <td>@(c.DerniereUtilisation?.ToString("dd/MM/yyyy HH:mm") ?? "—")</td>
+                        <td>@(c.Actif ? Html.Raw("<span class='badge text-bg-success'>Active</span>") : Html.Raw("<span class='badge text-bg-secondary'>Révoquée</span>"))</td>
+                        <td class="text-end">
+                            @if (c.Actif)
+                            {
+                                <form method="post" asp-action="RevoquerCle" asp-route-id="@c.Id" class="d-inline" onsubmit="return confirm('Révoquer cette clé ?')">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-danger">Révoquer</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="fw-bold mb-2">Points d'entrée disponibles</h5>
+        <pre class="mb-0 small">GET /api/v1/ping
+GET /api/v1/rapport?du=2026-06-01&au=2026-06-30
+GET /api/v1/ecritures?du=...&au=...
+GET /api/v1/balance?du=...&au=...
+GET /api/v1/ventes?du=...&au=...
+GET /api/v1/depenses?du=...&au=...
+GET /api/v1/exports/ecritures.csv?du=...&au=...
+
+En-tête requis :  X-API-Key: &lt;votre clé&gt;</pre>
+    </div>
+</div>
