@@ -1,0 +1,56 @@
+@model RapportComptaVm
+@{
+    ViewData["Title"] = "Comptabilité";
+    Func<decimal, string> fcfa = v => string.Format("{0:N0} {1}", v, Model.Devise == "XOF" ? "FCFA" : Model.Devise);
+    var du = ViewBag.Du as string;
+    var au = ViewBag.Au as string;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="fw-bold mb-1">Comptabilité OHADA</h1>
+        <p class="text-muted mb-0">Trésorerie, écritures (SYSCOHADA) et interfaçage ERP — du @Model.Du.ToString("dd/MM/yyyy") au @Model.Au.ToString("dd/MM/yyyy")</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-outline-secondary" asp-action="Ecritures" asp-route-du="@du" asp-route-au="@au"><i class="bi bi-list-columns-reverse me-1"></i>Écritures</a>
+        <a class="btn btn-outline-secondary" asp-action="Balance" asp-route-du="@du" asp-route-au="@au"><i class="bi bi-table me-1"></i>Balance</a>
+        <a class="btn btn-outline-primary" asp-action="ExportEcritures" asp-route-du="@du" asp-route-au="@au"><i class="bi bi-filetype-csv me-1"></i>Export CSV</a>
+        <a class="btn btn-outline-dark" asp-action="ApiCles"><i class="bi bi-key me-1"></i>Clés API</a>
+        <a class="btn btn-outline-dark" asp-action="Parametrage"><i class="bi bi-gear me-1"></i>Paramétrage</a>
+    </div>
+</div>
+
+<form method="get" class="card mb-4">
+    <div class="card-body row g-2 align-items-end">
+        <div class="col-md-3"><label class="form-label">Du</label><input type="date" name="du" value="@du" class="form-control" /></div>
+        <div class="col-md-3"><label class="form-label">Au</label><input type="date" name="au" value="@au" class="form-control" /></div>
+        <div class="col-md-3 d-grid"><button class="btn btn-primary">Actualiser</button></div>
+        <div class="col-md-3 text-md-end">
+            <span class="badge @(Model.AssujettiTva ? "text-bg-success" : "text-bg-secondary")">
+                @(Model.AssujettiTva ? $"Assujetti TVA {Model.TauxTva:0}%" : "Non assujetti TVA")
+            </span>
+        </div>
+    </div>
+</form>
+
+<div class="row g-3 mb-2">
+    <div class="col-md-4 col-lg-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">Recettes (TTC)</div><div class="fs-5 fw-bold">@fcfa(Model.Recettes)</div></div></div></div>
+    <div class="col-md-4 col-lg-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">Dépenses (TTC)</div><div class="fs-5 fw-bold">@fcfa(Model.Depenses)</div></div></div></div>
+    <div class="col-md-4 col-lg-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">Résultat (HT)</div><div class="fs-5 fw-bold @(Model.Resultat >= 0 ? "text-success" : "text-danger")">@fcfa(Model.Resultat)</div></div></div></div>
+    <div class="col-md-4 col-lg-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">TVA collectée</div><div class="fs-5 fw-bold">@fcfa(Model.TvaCollectee)</div></div></div></div>
+    <div class="col-md-4 col-lg-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">TVA déductible</div><div class="fs-5 fw-bold">@fcfa(Model.TvaDeductible)</div></div></div></div>
+    <div class="col-md-4 col-lg-2"><div class="card h-100"><div class="card-body"><div class="text-muted small">Solde trésorerie</div><div class="fs-5 fw-bold">@fcfa(Model.SoldeTresorerie)</div></div></div></div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="fw-bold mb-0">TVA nette à reverser</h5>
+            <span class="fs-5 fw-bold">@fcfa(Math.Max(0, Model.TvaCollectee - Model.TvaDeductible))</span>
+        </div>
+        <p class="text-muted small mb-0">
+            Régime de TVA et comptes modifiables dans « Paramétrage ». Les écritures sont générées automatiquement
+            à partir des ventes, dépenses et mouvements de caisse de la période, selon le plan SYSCOHADA.
+        </p>
+    </div>
+</div>

@@ -1,0 +1,46 @@
+@model ParametrageComptable
+@{
+    ViewData["Title"] = "Paramétrage comptable";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="fw-bold mb-0">Paramétrage comptable OHADA</h1>
+    <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+</div>
+
+<form method="post" class="card">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="TenantId" />
+    <div class="card-body">
+        <h5 class="fw-bold mb-3">Régime fiscal</h5>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4">
+                <div class="form-check form-switch mt-4">
+                    <input class="form-check-input" type="checkbox" asp-for="AssujettiTva" />
+                    <label class="form-check-label" asp-for="AssujettiTva">Assujetti à la TVA</label>
+                </div>
+            </div>
+            <div class="col-md-4"><label class="form-label">Taux de TVA (%)</label><input asp-for="TauxTva" type="number" step="0.01" min="0" class="form-control" /></div>
+            <div class="col-md-2"><label class="form-label">Devise</label><input asp-for="Devise" class="form-control" /></div>
+            <div class="col-md-2"><label class="form-label">Exercice</label><input asp-for="Exercice" type="number" class="form-control" /></div>
+        </div>
+
+        <h5 class="fw-bold mb-3">Comptes SYSCOHADA</h5>
+        <div class="row g-3">
+            <div class="col-md-3"><label class="form-label">Caisse</label><input asp-for="CompteCaisse" class="form-control" /></div>
+            <div class="col-md-3"><label class="form-label">Banque</label><input asp-for="CompteBanque" class="form-control" /></div>
+            <div class="col-md-3"><label class="form-label">Clients</label><input asp-for="CompteClients" class="form-control" /></div>
+            <div class="col-md-3"><label class="form-label">Fournisseurs</label><input asp-for="CompteFournisseurs" class="form-control" /></div>
+            <div class="col-md-3"><label class="form-label">Ventes</label><input asp-for="CompteVentes" class="form-control" /></div>
+            <div class="col-md-3"><label class="form-label">Achats</label><input asp-for="CompteAchats" class="form-control" /></div>
+            <div class="col-md-3"><label class="form-label">Charges diverses</label><input asp-for="CompteCharges" class="form-control" /></div>
+            <div class="col-md-3"><label class="form-label">Apports / OD</label><input asp-for="CompteApports" class="form-control" /></div>
+            <div class="col-md-3"><label class="form-label">TVA collectée</label><input asp-for="CompteTvaCollectee" class="form-control" /></div>
+            <div class="col-md-3"><label class="form-label">TVA déductible</label><input asp-for="CompteTvaDeductible" class="form-control" /></div>
+        </div>
+    </div>
+    <div class="card-footer text-end">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1"></i>Enregistrer</button>
+    </div>
+</form>

@@ -24,6 +24,8 @@ public class AppDbContext : DbContext
     public DbSet<Categorie> Categories => Set<Categorie>();
     public DbSet<ProfilAcces> ProfilsAcces => Set<ProfilAcces>();
     public DbSet<MessageChat> MessagesChat => Set<MessageChat>();
+    public DbSet<ParametrageComptable> ParametragesComptables => Set<ParametrageComptable>();
+    public DbSet<CleApi> ClesApi => Set<CleApi>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -90,6 +92,12 @@ public class AppDbContext : DbContext
         // récent de chaque établissement sans scanner toute la table.
         modelBuilder.Entity<MessageChat>()
             .HasIndex(m => new { m.TenantId, m.DateEnvoi });
+
+        // Comptabilité OHADA.
+        modelBuilder.Entity<ParametrageComptable>().HasIndex(p => p.TenantId).IsUnique();
+        modelBuilder.Entity<ParametrageComptable>().Property(p => p.TauxTva).HasConversion<double>();
+        modelBuilder.Entity<CleApi>().HasIndex(c => c.CleHash);
+        modelBuilder.Entity<CleApi>().HasIndex(c => c.TenantId);
 
         base.OnModelCreating(modelBuilder);
     }

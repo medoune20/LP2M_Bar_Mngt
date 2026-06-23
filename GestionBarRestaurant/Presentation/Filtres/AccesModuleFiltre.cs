@@ -21,6 +21,7 @@ public class AccesModuleFiltre : IActionFilter
         { "Caisse", "caisse" },
         { "Depense", "depenses" },
         { "Rapport", "rapports" },
+        { "Comptabilite", "comptabilite" },
         { "Prevision", "previsions" },
         { "EvaluationCaissier", "evaluation_caissiers" },
         { "Utilisateur", "utilisateurs" },
