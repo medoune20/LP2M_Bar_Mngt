@@ -4,6 +4,55 @@
     var produits = ViewBag.Produits as List<Produit> ?? new List<Produit>();
     var categories = ViewBag.Categories as List<string> ?? new List<string>();
     Func<decimal, string> fcfa = v => string.Format("{0:N0} FCFA", v);
+    var aEnvoyer = Model.Lignes.Any(l => l.Preparation == StatutPreparation.EnAttente);
+    var enCuisine = Model.Lignes.Where(l => l.Preparation == StatutPreparation.EnCuisine).Sum(l => l.Quantite);
+    var prets = Model.Lignes.Where(l => l.Preparation == StatutPreparation.Prete).Sum(l => l.Quantite);
+    var servis = Model.Lignes.Where(l => l.Preparation == StatutPreparation.Servie).Sum(l => l.Quantite);
+}
+
+@functions {
+    bool EstProduitCuisine(Produit p)
+    {
+        var texte = $"{p.Categorie} {p.Nom}".ToLowerInvariant();
+        string[] mots = { "snack", "accompagnement", "plat", "menu", "repas", "cuisine", "nourriture", "grillade", "grillé", "grille", "braisé", "braise", "poulet", "poisson", "brochette", "frites", "alloco", "attiéké", "attieke", "arachide", "chips", "pop-corn" };
+        return mots.Any(texte.Contains);
+    }
+
+    string BadgePreparation(StatutPreparation s) => s switch
+    {
+        StatutPreparation.EnAttente => "text-bg-light border",
+        StatutPreparation.EnCuisine => "text-bg-warning",
+        StatutPreparation.Prete => "text-bg-success",
+        StatutPreparation.Servie => "text-bg-secondary",
+        _ => "text-bg-light"
+    };
+
+    string LibellePreparation(StatutPreparation s) => s switch
+    {
+        StatutPreparation.EnAttente => "À envoyer",
+        StatutPreparation.EnCuisine => "En cuisine KDS",
+        StatutPreparation.Prete => "Prêt",
+        StatutPreparation.Servie => "Servi",
+        _ => "-"
+    };
+}
+
+@section Styles {
+<style>
+    .commande-product {
+        min-height: 90px;
+        border-radius: 16px;
+    }
+    .commande-status-card {
+        border: 1px solid rgba(15,23,42,.08);
+        border-radius: 18px;
+        padding: 10px 12px;
+        background: #f8fafc;
+        min-width: 110px;
+    }
+    .commande-status-card span { display:block; font-size:.75rem; color:#64748b; }
+    .commande-status-card strong { display:block; font-size:1.25rem; line-height:1.1; }
+</style>
 }
 
 <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
@@ -11,7 +60,15 @@
         <h1 class="fw-bold mb-1">Table @Model.TableNom</h1>
         <p class="text-muted mb-0">Addition @Model.Numero · @Model.Couverts couvert(s) · ouverte par @Model.OuvertePar</p>
     </div>
-    <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Plan de salle</a>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-warning" asp-action="Cuisine"><i class="bi bi-fire me-1"></i>Cuisine KDS</a>
+        <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Plan de salle</a>
+    </div>
+</div>
+
+<div class="alert alert-info d-flex flex-wrap align-items-center gap-2 mb-3">
+    <i class="bi bi-info-circle"></i>
+    <span>Les plats, snacks, grillades et accompagnements sont envoyés automatiquement en <strong>Cuisine KDS</strong>. Les autres articles peuvent être envoyés manuellement.</span>
 </div>
 
 <div class="row g-3">
@@ -28,15 +85,20 @@
                 <div class="row g-2">
                     @foreach (var p in produits)
                     {
+                        var autoCuisine = EstProduitCuisine(p);
                         <div class="col-6 col-md-4 produit-carte" data-cat="@p.Categorie.ToLowerInvariant()">
                             <form asp-action="AjouterLigne" method="post">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="commandeId" value="@Model.Id" />
                                 <input type="hidden" name="produitId" value="@p.Id" />
                                 <input type="hidden" name="quantite" value="1" />
-                                <button class="btn btn-outline-dark w-100 text-start p-2" type="submit">
+                                <button class="btn @(autoCuisine ? "btn-outline-warning" : "btn-outline-dark") w-100 text-start p-2 commande-product" type="submit">
                                     <div class="fw-semibold text-truncate">@p.Nom</div>
                                     <div class="small text-primary">@fcfa(p.PrixVente)</div>
+                                    @if (autoCuisine)
+                                    {
+                                        <span class="badge text-bg-warning mt-1"><i class="bi bi-fire me-1"></i>KDS auto</span>
+                                    }
                                 </button>
                             </form>
                         </div>
@@ -48,46 +110,61 @@
 
     <div class="col-lg-5">
         <div class="card">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <span class="fw-semibold"><i class="bi bi-receipt me-1"></i>Addition</span>
-                @{ var aEnvoyer = Model.Lignes.Any(l => l.Preparation == StatutPreparation.EnAttente); }
-                <form asp-action="EnvoyerCuisine" method="post" class="m-0">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="commandeId" value="@Model.Id" />
-                    <button class="btn btn-sm btn-warning" @(aEnvoyer ? "" : "disabled")><i class="bi bi-fire me-1"></i>Envoyer en cuisine</button>
-                </form>
+            <div class="card-header bg-white">
+                <div class="d-flex justify-content-between align-items-center gap-2 mb-2">
+                    <span class="fw-semibold"><i class="bi bi-receipt me-1"></i>Addition</span>
+                    <form asp-action="EnvoyerCuisine" method="post" class="m-0">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="commandeId" value="@Model.Id" />
+                        <button class="btn btn-sm btn-warning" @(aEnvoyer ? "" : "disabled")><i class="bi bi-fire me-1"></i>Envoyer en cuisine</button>
+                    </form>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <div class="commande-status-card"><span>À envoyer</span><strong>@Model.Lignes.Where(l => l.Preparation == StatutPreparation.EnAttente).Sum(l => l.Quantite)</strong></div>
+                    <div class="commande-status-card"><span>En KDS</span><strong>@enCuisine</strong></div>
+                    <div class="commande-status-card"><span>Prêts</span><strong>@prets</strong></div>
+                    <div class="commande-status-card"><span>Servis</span><strong>@servis</strong></div>
+                </div>
             </div>
             <div class="table-responsive">
                 <table class="table align-middle mb-0">
                     <tbody>
                         @if (!Model.Lignes.Any()) { <tr><td colspan="3" class="text-center text-muted py-4">Aucun article. Touchez un produit pour l'ajouter.</td></tr> }
-                        @foreach (var l in Model.Lignes)
+                        @foreach (var l in Model.Lignes.OrderBy(l => l.Preparation).ThenBy(l => l.ProduitNom))
                         {
                             <tr>
                                 <td>
                                     <div class="fw-semibold">@l.ProduitNom</div>
                                     <div class="small text-muted">
                                         @fcfa(l.PrixUnitaire)
-                                        @if (l.Preparation == StatutPreparation.EnCuisine) { <span class="badge text-bg-warning ms-1">En cuisine</span> }
-                                        else if (l.Preparation == StatutPreparation.Prete) { <span class="badge text-bg-success ms-1">Prêt</span> }
-                                        else if (l.Preparation == StatutPreparation.Servie) { <span class="badge text-bg-secondary ms-1">Servi</span> }
+                                        <span class="badge @BadgePreparation(l.Preparation) ms-1">@LibellePreparation(l.Preparation)</span>
                                     </div>
                                 </td>
                                 <td style="width:130px;">
-                                    <form asp-action="ModifierQuantite" method="post" class="d-flex align-items-center gap-1">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="ligneId" value="@l.Id" />
-                                        <input type="number" name="quantite" value="@l.Quantite" min="0" class="form-control form-control-sm" style="width:64px;" />
-                                        <button class="btn btn-sm btn-outline-secondary" title="Mettre à jour"><i class="bi bi-check2"></i></button>
-                                    </form>
+                                    @if (l.Preparation == StatutPreparation.EnAttente)
+                                    {
+                                        <form asp-action="ModifierQuantite" method="post" class="d-flex align-items-center gap-1">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="ligneId" value="@l.Id" />
+                                            <input type="number" name="quantite" value="@l.Quantite" min="0" class="form-control form-control-sm" style="width:64px;" />
+                                            <button class="btn btn-sm btn-outline-secondary" title="Mettre à jour"><i class="bi bi-check2"></i></button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-light border">Qté @l.Quantite</span>
+                                    }
                                 </td>
                                 <td class="text-end">
                                     <div class="fw-semibold">@fcfa(l.Total)</div>
-                                    <form asp-action="SupprimerLigne" method="post" class="d-inline">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="ligneId" value="@l.Id" />
-                                        <button class="btn btn-sm btn-link text-danger p-0" title="Retirer"><i class="bi bi-trash"></i></button>
-                                    </form>
+                                    @if (l.Preparation == StatutPreparation.EnAttente)
+                                    {
+                                        <form asp-action="SupprimerLigne" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="ligneId" value="@l.Id" />
+                                            <button class="btn btn-sm btn-link text-danger p-0" title="Retirer"><i class="bi bi-trash"></i></button>
+                                        </form>
+                                    }
                                 </td>
                             </tr>
                         }
