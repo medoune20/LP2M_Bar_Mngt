@@ -136,7 +136,10 @@ public class SalleController : BaseController
         if (produit.StockActuel <= 0) { TempData["Erreur"] = $"Stock épuisé pour {produit.Nom}."; return RedirectToAction(nameof(Commande), new { id = commandeId }); }
 
         var qte = quantite <= 0 ? 1 : quantite;
-        var ligne = commande.Lignes.FirstOrDefault(l => l.ProduitId == produitId && l.Preparation == StatutPreparation.EnAttente);
+        var vaEnCuisine = EstProduitCuisine(produit);
+        var statutInitial = vaEnCuisine ? StatutPreparation.EnCuisine : StatutPreparation.EnAttente;
+        var ligne = commande.Lignes.FirstOrDefault(l => l.ProduitId == produitId && l.Preparation == statutInitial);
+
         if (ligne != null)
         {
             ligne.Quantite += qte;
@@ -149,10 +152,18 @@ public class SalleController : BaseController
                 ProduitNom = produit.Nom,
                 Quantite = qte,
                 PrixUnitaire = produit.PrixVente,
-                PrixAchatUnitaire = produit.PrixAchat
+                PrixAchatUnitaire = produit.PrixAchat,
+                Preparation = statutInitial
             });
         }
+
         _db.SaveChanges();
+
+        if (vaEnCuisine)
+        {
+            TempData["Succes"] = $"{produit.Nom} ajouté et envoyé automatiquement en cuisine KDS.";
+        }
+
         return RedirectToAction(nameof(Commande), new { id = commandeId });
     }
 
@@ -434,5 +445,18 @@ public class SalleController : BaseController
         _db.Caisses.Add(caisse);
         _db.SaveChanges();
         return caisse;
+    }
+
+    private static bool EstProduitCuisine(Produit produit)
+    {
+        var texte = $"{produit.Categorie} {produit.Nom}".ToLowerInvariant();
+        string[] motsClesCuisine =
+        {
+            "snack", "accompagnement", "plat", "menu", "repas", "cuisine", "nourriture",
+            "grillade", "grillé", "grille", "braisé", "braise", "poulet", "poisson",
+            "brochette", "frites", "alloco", "attiéké", "attieke", "arachide", "chips", "pop-corn"
+        };
+
+        return motsClesCuisine.Any(texte.Contains);
     }
 }
