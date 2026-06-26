@@ -62,7 +62,7 @@
     <aside class="lp2m-sidebar no-print">
         <nav class="lp2m-nav">
             @{
-                var secVentes = voir("caisse_rapide") || voir("restaurant") || voir("ventes") || voir("caisse");
+                var secVentes = voir("caisse_rapide") || voir("restaurant") || voir("cuisine_kds") || voir("ventes") || voir("caisse");
                 var secCatalogue = voir("produits") || voir("categories") || voir("stock");
                 var secClients = voir("clients") || voir("fidelite");
                 var secFinances = voir("depenses") || voir("rapports") || voir("comptabilite") || voir("previsions") || voir("evaluation_caissiers");
@@ -82,7 +82,10 @@
                 @if (voir("restaurant"))
                 {
                     <a class="lp2m-link" asp-controller="Salle" asp-action="Index"><i class="bi bi-shop-window"></i><span>Salle / Restaurant</span></a>
-                    <a class="lp2m-link" asp-controller="Salle" asp-action="Cuisine"><i class="bi bi-fire"></i><span>Cuisine (KDS)</span></a>
+                }
+                @if (voir("cuisine_kds"))
+                {
+                    <a class="lp2m-link" asp-controller="Salle" asp-action="Cuisine"><i class="bi bi-fire"></i><span>Cuisine KDS</span></a>
                 }
                 @if (voir("ventes"))
                 {
@@ -206,6 +209,10 @@
         @if (voir("caisse_rapide"))
         {
             <a asp-controller="Vente" asp-action="Rapide" class="mobile-nav-pos"><i class="bi bi-lightning-charge-fill"></i><span>Caisse</span></a>
+        }
+        @if (voir("cuisine_kds"))
+        {
+            <a asp-controller="Salle" asp-action="Cuisine"><i class="bi bi-fire"></i><span>KDS</span></a>
         }
         @if (voir("stock"))
         {
