@@ -193,4 +193,127 @@ public class SalleController : BaseController
         }
         return RedirectToAction(nameof(Index));
     }
+
+    // --- Encaissement : transforme l'addition en vente, décrémente le stock,
+    //     alimente la caisse, puis libère la table. ---
+    [HttpPost]
+    public IActionResult Encaisser(int commandeId, string modePaiement, string? referencePaiement, decimal montantRecu)
+    {
+        var commande = _db.Commandes.Include(c => c.Lignes)
+            .FirstOrDefault(c => c.Id == commandeId && c.TenantId == TenantId && c.Statut == StatutCommande.Ouverte);
+        if (commande == null) { TempData["Erreur"] = "Addition introuvable ou déjà clôturée."; return RedirectToAction(nameof(Index)); }
+        if (!commande.Lignes.Any()) { TempData["Erreur"] = "Addition vide."; return RedirectToAction(nameof(Commande), new { id = commandeId }); }
+
+        modePaiement = string.IsNullOrWhiteSpace(modePaiement) ? "Espèces" : modePaiement.Trim();
+        referencePaiement = (referencePaiement ?? string.Empty).Trim();
+        var estEspeces = string.Equals(modePaiement, "Espèces", StringComparison.OrdinalIgnoreCase);
+
+        foreach (var l in commande.Lignes)
+        {
+            var prod = _db.Produits.FirstOrDefault(p => p.Id == l.ProduitId && p.TenantId == TenantId);
+            if (prod != null && prod.StockActuel < l.Quantite)
+            {
+                TempData["Erreur"] = $"Stock insuffisant pour {l.ProduitNom} (disponible : {prod.StockActuel}).";
+                return RedirectToAction(nameof(Commande), new { id = commandeId });
+            }
+        }
+
+        var total = commande.Total;
+        if (estEspeces && montantRecu < total)
+        {
+            TempData["Erreur"] = "Le montant reçu est inférieur au total.";
+            return RedirectToAction(nameof(Commande), new { id = commandeId });
+        }
+
+        var caisse = GetOrCreateCaisse();
+        using var tx = _db.Database.BeginTransaction();
+        try
+        {
+            var date = DateTime.Now;
+            var vente = new Vente
+            {
+                TenantId = TenantId,
+                DateVente = date,
+                NumeroTicket = $"T{TenantId}-{date:yyyyMMddHHmmssfff}-{Guid.NewGuid():N}"[..28],
+                ClientNom = string.IsNullOrWhiteSpace(commande.ClientNom) ? "Client comptoir" : commande.ClientNom,
+                ModePaiement = modePaiement,
+                ReferencePaiement = referencePaiement,
+                MontantRecu = estEspeces ? montantRecu : total,
+                TotalBrut = total,
+                Vendeur = UtilisateurNom,
+                VendeurId = UtilisateurId,
+                CaisseSessionId = caisse.Id,
+                Statut = StatutVente.Validee,
+                Lignes = commande.Lignes.Select(l => new LigneVente
+                {
+                    ProduitId = l.ProduitId,
+                    ProduitNom = l.ProduitNom,
+                    Quantite = l.Quantite,
+                    PrixUnitaire = l.PrixUnitaire,
+                    PrixAchatUnitaire = l.PrixAchatUnitaire
+                }).ToList()
+            };
+            _db.Ventes.Add(vente);
+
+            foreach (var l in commande.Lignes)
+            {
+                var prod = _db.Produits.First(p => p.Id == l.ProduitId && p.TenantId == TenantId);
+                prod.StockActuel -= l.Quantite;
+                _db.MouvementsStock.Add(new MouvementStock
+                {
+                    TenantId = TenantId,
+                    DateMouvement = date,
+                    ProduitId = prod.Id,
+                    ProduitNom = prod.Nom,
+                    Type = TypeMouvementStock.Sortie,
+                    Quantite = l.Quantite,
+                    Motif = $"Vente {vente.NumeroTicket} (table {commande.TableNom})",
+                    Utilisateur = UtilisateurNom
+                });
+            }
+
+            if (estEspeces) caisse.Encaissements += total;
+            else caisse.EncaissementsAutres += total;
+
+            commande.Statut = StatutCommande.Encaissee;
+            commande.DateCloture = date;
+            _db.SaveChanges();
+
+            commande.VenteId = vente.Id;
+            _db.SaveChanges();
+            tx.Commit();
+
+            TempData["Succes"] = $"Addition encaissée. Ticket : {vente.NumeroTicket}.";
+            return RedirectToAction("Details", "Vente", new { id = vente.Id });
+        }
+        catch
+        {
+            tx.Rollback();
+            TempData["Erreur"] = "L'encaissement a échoué. Aucune modification n'a été validée.";
+            return RedirectToAction(nameof(Commande), new { id = commandeId });
+        }
+    }
+
+    private CaisseSession GetOrCreateCaisse()
+    {
+        var caisse = _db.Caisses
+            .Where(c => c.TenantId == TenantId && c.Statut == StatutCaisse.Ouverte && c.CaissierId == UtilisateurId)
+            .OrderByDescending(c => c.DateOuverture)
+            .FirstOrDefault();
+        if (caisse != null) return caisse;
+
+        caisse = new CaisseSession
+        {
+            TenantId = TenantId,
+            DateOuverture = DateTime.Now,
+            MontantOuverture = 0,
+            Libelle = "Caisse service restaurant",
+            Caissier = UtilisateurNom,
+            CaissierId = UtilisateurId,
+            Statut = StatutCaisse.Ouverte
+        };
+        _db.Caisses.Add(caisse);
+        _db.SaveChanges();
+        return caisse;
+    }
 }
