@@ -91,6 +91,7 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     DatabaseInitializer.Initialiser(db);
+    BugFixInitializer.Appliquer(db);
     NormaliserSQLiteDecimal.Executer(db);
 }
 
