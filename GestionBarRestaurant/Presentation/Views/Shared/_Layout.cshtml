@@ -23,6 +23,45 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="~/css/site.css" rel="stylesheet" asp-append-version="true">
+    <style>
+        .lp2m-nav-section-toggle {
+            width: 100%;
+            border: 0;
+            background: transparent;
+            color: inherit;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: .5rem;
+            cursor: pointer;
+            padding: .45rem .55rem;
+            margin-top: .55rem;
+            text-align: left;
+        }
+        .lp2m-nav-section-toggle:hover {
+            background: rgba(255,255,255,.06);
+            border-radius: 12px;
+        }
+        .lp2m-nav-section-toggle .lp2m-nav-sep {
+            margin: 0;
+            flex: 1;
+        }
+        .lp2m-nav-section-toggle .bi-chevron-down {
+            transition: transform .18s ease;
+            font-size: .82rem;
+            opacity: .72;
+        }
+        .lp2m-nav-section-toggle.is-collapsed .bi-chevron-down {
+            transform: rotate(-90deg);
+        }
+        .lp2m-nav-section {
+            display: grid;
+            gap: .15rem;
+        }
+        .lp2m-nav-section.is-collapsed {
+            display: none;
+        }
+    </style>
     @await RenderSectionAsync("Styles", required: false)
     <link rel="manifest" href="~/manifest.json">
     <meta name="theme-color" content="@tenantColor">
@@ -68,104 +107,132 @@
                 var secFinances = voir("depenses") || voir("rapports") || voir("comptabilite") || voir("previsions") || voir("evaluation_caissiers");
             }
 
-            <div class="lp2m-nav-sep">Pilotage</div>
-            <a class="lp2m-link" asp-controller="Accueil" asp-action="Index"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
-            <a class="lp2m-link" asp-controller="Chat" asp-action="Index"><i class="bi bi-chat-dots"></i><span>Messagerie</span><span class="js-chat-badge badge rounded-pill text-bg-danger ms-auto" hidden>0</span></a>
+            <button type="button" class="lp2m-nav-section-toggle" data-nav-section="pilotage" aria-expanded="true">
+                <span class="lp2m-nav-sep">Pilotage</span><i class="bi bi-chevron-down"></i>
+            </button>
+            <div class="lp2m-nav-section" data-nav-section-content="pilotage">
+                <a class="lp2m-link" asp-controller="Accueil" asp-action="Index"><i class="bi bi-speedometer2"></i><span>Dashboard</span></a>
+                <a class="lp2m-link" asp-controller="Chat" asp-action="Index"><i class="bi bi-chat-dots"></i><span>Messagerie</span><span class="js-chat-badge badge rounded-pill text-bg-danger ms-auto" hidden>0</span></a>
+            </div>
 
             @if (secVentes)
             {
-                <div class="lp2m-nav-sep">Ventes &amp; caisse</div>
-                @if (voir("caisse_rapide"))
-                {
-                    <a class="lp2m-link" asp-controller="Vente" asp-action="Rapide"><i class="bi bi-lightning-charge"></i><span>Caisse rapide</span></a>
-                }
-                @if (voir("restaurant"))
-                {
-                    <a class="lp2m-link" asp-controller="Salle" asp-action="Index"><i class="bi bi-shop-window"></i><span>Salle / Restaurant</span></a>
-                }
-                @if (voir("cuisine_kds"))
-                {
-                    <a class="lp2m-link" asp-controller="Salle" asp-action="Cuisine"><i class="bi bi-fire"></i><span>Cuisine KDS</span></a>
-                }
-                @if (voir("ventes"))
-                {
-                    <a class="lp2m-link" asp-controller="Vente" asp-action="Index"><i class="bi bi-receipt"></i><span>Ventes</span></a>
-                }
-                @if (voir("caisse"))
-                {
-                    <a class="lp2m-link" asp-controller="Caisse" asp-action="Index"><i class="bi bi-cash-stack"></i><span>Caisse</span></a>
-                }
+                <button type="button" class="lp2m-nav-section-toggle" data-nav-section="ventes" aria-expanded="true">
+                    <span class="lp2m-nav-sep">Ventes &amp; caisse</span><i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="lp2m-nav-section" data-nav-section-content="ventes">
+                    @if (voir("caisse_rapide"))
+                    {
+                        <a class="lp2m-link" asp-controller="Vente" asp-action="Rapide"><i class="bi bi-lightning-charge"></i><span>Caisse rapide</span></a>
+                    }
+                    @if (voir("restaurant"))
+                    {
+                        <a class="lp2m-link" asp-controller="Salle" asp-action="Index"><i class="bi bi-shop-window"></i><span>Salle / Restaurant</span></a>
+                    }
+                    @if (voir("cuisine_kds"))
+                    {
+                        <a class="lp2m-link" asp-controller="Salle" asp-action="Cuisine"><i class="bi bi-fire"></i><span>Cuisine KDS</span></a>
+                    }
+                    @if (voir("ventes"))
+                    {
+                        <a class="lp2m-link" asp-controller="Vente" asp-action="Index"><i class="bi bi-receipt"></i><span>Ventes</span></a>
+                    }
+                    @if (voir("caisse"))
+                    {
+                        <a class="lp2m-link" asp-controller="Caisse" asp-action="Index"><i class="bi bi-cash-stack"></i><span>Caisse</span></a>
+                    }
+                </div>
             }
 
             @if (secCatalogue)
             {
-                <div class="lp2m-nav-sep">Catalogue &amp; stock</div>
-                @if (voir("produits"))
-                {
-                    <a class="lp2m-link" asp-controller="Produit" asp-action="Index"><i class="bi bi-box-seam"></i><span>Produits</span></a>
-                }
-                @if (voir("categories"))
-                {
-                    <a class="lp2m-link" asp-controller="Categorie" asp-action="Index"><i class="bi bi-tags"></i><span>Catégories</span></a>
-                }
-                @if (voir("stock"))
-                {
-                    <a class="lp2m-link" asp-controller="Stock" asp-action="Index"><i class="bi bi-boxes"></i><span>Stock</span></a>
-                }
+                <button type="button" class="lp2m-nav-section-toggle" data-nav-section="catalogue" aria-expanded="true">
+                    <span class="lp2m-nav-sep">Catalogue &amp; stock</span><i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="lp2m-nav-section" data-nav-section-content="catalogue">
+                    @if (voir("produits"))
+                    {
+                        <a class="lp2m-link" asp-controller="Produit" asp-action="Index"><i class="bi bi-box-seam"></i><span>Produits</span></a>
+                    }
+                    @if (voir("categories"))
+                    {
+                        <a class="lp2m-link" asp-controller="Categorie" asp-action="Index"><i class="bi bi-tags"></i><span>Catégories</span></a>
+                    }
+                    @if (voir("stock"))
+                    {
+                        <a class="lp2m-link" asp-controller="Stock" asp-action="Index"><i class="bi bi-boxes"></i><span>Stock</span></a>
+                    }
+                </div>
             }
 
             @if (secClients)
             {
-                <div class="lp2m-nav-sep">Clients</div>
-                @if (voir("clients"))
-                {
-                    <a class="lp2m-link" asp-controller="Client" asp-action="Index"><i class="bi bi-person-lines-fill"></i><span>Clients</span></a>
-                }
-                @if (voir("fidelite"))
-                {
-                    <a class="lp2m-link" asp-controller="Fidelite" asp-action="Index"><i class="bi bi-stars"></i><span>Fidélité</span></a>
-                }
+                <button type="button" class="lp2m-nav-section-toggle" data-nav-section="clients" aria-expanded="true">
+                    <span class="lp2m-nav-sep">Clients</span><i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="lp2m-nav-section" data-nav-section-content="clients">
+                    @if (voir("clients"))
+                    {
+                        <a class="lp2m-link" asp-controller="Client" asp-action="Index"><i class="bi bi-person-lines-fill"></i><span>Clients</span></a>
+                    }
+                    @if (voir("fidelite"))
+                    {
+                        <a class="lp2m-link" asp-controller="Fidelite" asp-action="Index"><i class="bi bi-stars"></i><span>Fidélité</span></a>
+                    }
+                </div>
             }
 
             @if (secFinances)
             {
-                <div class="lp2m-nav-sep">Finances &amp; analyses</div>
-                @if (voir("depenses"))
-                {
-                    <a class="lp2m-link" asp-controller="Depense" asp-action="Index"><i class="bi bi-coin"></i><span>Dépenses</span></a>
-                }
-                @if (voir("rapports"))
-                {
-                    <a class="lp2m-link" asp-controller="Rapport" asp-action="Index"><i class="bi bi-graph-up"></i><span>Rapports</span></a>
-                }
-                @if (voir("comptabilite"))
-                {
-                    <a class="lp2m-link" asp-controller="Comptabilite" asp-action="Index"><i class="bi bi-journal-text"></i><span>Comptabilité</span></a>
-                }
-                @if (voir("previsions"))
-                {
-                    <a class="lp2m-link" asp-controller="Prevision" asp-action="Index"><i class="bi bi-magic"></i><span>Prévisions</span></a>
-                }
-                @if (voir("evaluation_caissiers"))
-                {
-                    <a class="lp2m-link" asp-controller="EvaluationCaissier" asp-action="Index"><i class="bi bi-award"></i><span>Caissiers</span></a>
-                }
+                <button type="button" class="lp2m-nav-section-toggle" data-nav-section="finances" aria-expanded="true">
+                    <span class="lp2m-nav-sep">Finances &amp; analyses</span><i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="lp2m-nav-section" data-nav-section-content="finances">
+                    @if (voir("depenses"))
+                    {
+                        <a class="lp2m-link" asp-controller="Depense" asp-action="Index"><i class="bi bi-coin"></i><span>Dépenses</span></a>
+                    }
+                    @if (voir("rapports"))
+                    {
+                        <a class="lp2m-link" asp-controller="Rapport" asp-action="Index"><i class="bi bi-graph-up"></i><span>Rapports</span></a>
+                    }
+                    @if (voir("comptabilite"))
+                    {
+                        <a class="lp2m-link" asp-controller="Comptabilite" asp-action="Index"><i class="bi bi-journal-text"></i><span>Comptabilité</span></a>
+                    }
+                    @if (voir("previsions"))
+                    {
+                        <a class="lp2m-link" asp-controller="Prevision" asp-action="Index"><i class="bi bi-magic"></i><span>Prévisions</span></a>
+                    }
+                    @if (voir("evaluation_caissiers"))
+                    {
+                        <a class="lp2m-link" asp-controller="EvaluationCaissier" asp-action="Index"><i class="bi bi-award"></i><span>Caissiers</span></a>
+                    }
+                </div>
             }
 
             @if (estAdmin || isSuperAdmin)
             {
-                <div class="lp2m-nav-sep">Administration</div>
-                <a class="lp2m-link" asp-controller="Utilisateur" asp-action="Index"><i class="bi bi-people"></i><span>Utilisateurs</span></a>
-                <a class="lp2m-link" asp-controller="Profil" asp-action="Index"><i class="bi bi-shield-lock"></i><span>Profils / rôles</span></a>
-                <a class="lp2m-link" asp-controller="Tenant" asp-action="Modifier" asp-route-id="@(Context.Session.GetInt32("TenantId"))"><i class="bi bi-shop"></i><span>Mon établissement</span></a>
+                <button type="button" class="lp2m-nav-section-toggle" data-nav-section="administration" aria-expanded="true">
+                    <span class="lp2m-nav-sep">Administration</span><i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="lp2m-nav-section" data-nav-section-content="administration">
+                    <a class="lp2m-link" asp-controller="Utilisateur" asp-action="Index"><i class="bi bi-people"></i><span>Utilisateurs</span></a>
+                    <a class="lp2m-link" asp-controller="Profil" asp-action="Index"><i class="bi bi-shield-lock"></i><span>Profils / rôles</span></a>
+                    <a class="lp2m-link" asp-controller="Tenant" asp-action="Modifier" asp-route-id="@(Context.Session.GetInt32("TenantId"))"><i class="bi bi-shop"></i><span>Mon établissement</span></a>
+                </div>
             }
 
             @if (isSuperAdmin)
             {
-                <div class="lp2m-nav-sep">Super-admin</div>
-                <a class="lp2m-link" asp-controller="Tenant" asp-action="Demandes"><i class="bi bi-person-check"></i><span>Demandes d'inscription</span></a>
-                <a class="lp2m-link" asp-controller="Tenant" asp-action="Index"><i class="bi bi-buildings"></i><span>Tenants</span></a>
-                <a class="lp2m-link" asp-controller="Sauvegarde" asp-action="Index"><i class="bi bi-database-down"></i><span>Sauvegarde</span></a>
+                <button type="button" class="lp2m-nav-section-toggle" data-nav-section="superadmin" aria-expanded="true">
+                    <span class="lp2m-nav-sep">Super-admin</span><i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="lp2m-nav-section" data-nav-section-content="superadmin">
+                    <a class="lp2m-link" asp-controller="Tenant" asp-action="Demandes"><i class="bi bi-person-check"></i><span>Demandes d'inscription</span></a>
+                    <a class="lp2m-link" asp-controller="Tenant" asp-action="Index"><i class="bi bi-buildings"></i><span>Tenants</span></a>
+                    <a class="lp2m-link" asp-controller="Sauvegarde" asp-action="Index"><i class="bi bi-database-down"></i><span>Sauvegarde</span></a>
+                </div>
             }
         </nav>
     </aside>
@@ -241,6 +308,38 @@
                     var ctrl = href.length >= 2 ? href[href.length - 2] : null;
                     if (ctrl && segments.indexOf(ctrl) !== -1) a.classList.add('actif');
                 });
+
+                // Sections de menu réductibles avec mémorisation locale.
+                var storageKey = 'lp2m.sidebar.collapsed.sections';
+                var collapsed = [];
+                try { collapsed = JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch(e) { collapsed = []; }
+
+                function setCollapsed(name, value) {
+                    var content = document.querySelector('[data-nav-section-content="' + name + '"]');
+                    var button = document.querySelector('[data-nav-section="' + name + '"]');
+                    if (!content || !button) return;
+                    content.classList.toggle('is-collapsed', value);
+                    button.classList.toggle('is-collapsed', value);
+                    button.setAttribute('aria-expanded', value ? 'false' : 'true');
+                }
+
+                document.querySelectorAll('[data-nav-section]').forEach(function (button) {
+                    var name = button.getAttribute('data-nav-section');
+                    var content = document.querySelector('[data-nav-section-content="' + name + '"]');
+                    var hasActive = content && content.querySelector('.lp2m-link.actif');
+                    setCollapsed(name, collapsed.indexOf(name) !== -1 && !hasActive);
+
+                    button.addEventListener('click', function () {
+                        var isCollapsed = !document.querySelector('[data-nav-section-content="' + name + '"]').classList.contains('is-collapsed');
+                        setCollapsed(name, isCollapsed);
+                        var list = [];
+                        document.querySelectorAll('[data-nav-section].is-collapsed').forEach(function (b) {
+                            list.push(b.getAttribute('data-nav-section'));
+                        });
+                        localStorage.setItem(storageKey, JSON.stringify(list));
+                    });
+                });
+
                 // Ferme le menu mobile après clic sur un lien.
                 document.querySelectorAll('.lp2m-link').forEach(function (a) {
                     a.addEventListener('click', function () { document.body.classList.remove('sidebar-open'); });
