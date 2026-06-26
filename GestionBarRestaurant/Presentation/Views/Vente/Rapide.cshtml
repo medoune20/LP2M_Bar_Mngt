@@ -160,6 +160,12 @@
                     <div id="panierVide" class="gbpos32-cart-empty"><i class="bi bi-cart3"></i><strong>Ticket vide</strong><span>Touchez un produit pour l’ajouter.</span></div>
                     <div id="lignesPanier"></div>
                     <div id="hiddenInputs"></div>
+                    <input type="hidden" name="clientUuid" id="clientUuid" />
+                </div>
+
+                <div id="zoneHorsLigne" class="gbpos32-offline d-none">
+                    <span><i class="bi bi-cloud-arrow-up me-1"></i><strong id="nbHorsLigne">0</strong> vente(s) hors-ligne à synchroniser</span>
+                    <button type="button" class="btn btn-sm btn-light" onclick="synchroniserHorsLigne()">Synchroniser</button>
                 </div>
 
                 @if (caissesDispo.Count > 1)
@@ -202,8 +208,14 @@
                 <div class="gbpos32-payments">
                     <input type="radio" class="btn-check" name="modePaiement" id="payCash" value="Espèces" checked onchange="majModePaiement()" />
                     <label for="payCash"><i class="bi bi-cash-stack"></i><span>Espèces</span></label>
-                    <input type="radio" class="btn-check" name="modePaiement" id="payMobile" value="Mobile Money" onchange="majModePaiement()" />
-                    <label for="payMobile"><i class="bi bi-phone"></i><span>Mobile Money</span></label>
+                    <input type="radio" class="btn-check" name="modePaiement" id="payWave" value="Wave" onchange="majModePaiement()" />
+                    <label for="payWave"><i class="bi bi-phone"></i><span>Wave</span></label>
+                    <input type="radio" class="btn-check" name="modePaiement" id="payOM" value="Orange Money" onchange="majModePaiement()" />
+                    <label for="payOM"><i class="bi bi-phone"></i><span>Orange Money</span></label>
+                    <input type="radio" class="btn-check" name="modePaiement" id="payMTN" value="MTN MoMo" onchange="majModePaiement()" />
+                    <label for="payMTN"><i class="bi bi-phone"></i><span>MTN MoMo</span></label>
+                    <input type="radio" class="btn-check" name="modePaiement" id="payMoov" value="Moov Money" onchange="majModePaiement()" />
+                    <label for="payMoov"><i class="bi bi-phone"></i><span>Moov Money</span></label>
                     <input type="radio" class="btn-check" name="modePaiement" id="payCard" value="Carte bancaire" onchange="majModePaiement()" />
                     <label for="payCard"><i class="bi bi-credit-card"></i><span>Carte</span></label>
                     <input type="radio" class="btn-check" name="modePaiement" id="payCredit" value="Crédit" onchange="majModePaiement()" />
@@ -390,7 +402,7 @@ function majModePaiement(){
     const mode = modePaiement();
     const refZone = document.getElementById('referencePaiementZone');
     const refInput = document.getElementById('referencePaiement');
-    const exigeReference = mode === 'Mobile Money' || mode === 'Carte bancaire';
+    const exigeReference = mode !== 'Espèces' && mode !== 'Crédit';
     refZone.classList.toggle('d-none', !exigeReference);
     refInput.required = exigeReference;
     if(!exigeReference) refInput.value = '';
@@ -461,7 +473,7 @@ function validerPanier(event){
     const paiement = modePaiement();
     const montantRecu = montantDepuisTexte(document.getElementById('montantRecu').value || '0');
     if(paiement === 'Espèces' && montantRecu < dernierTotalNet){ alert('Le montant encaissé est inférieur au total à payer.'); return false; }
-    if((paiement === 'Mobile Money' || paiement === 'Carte bancaire') && !document.getElementById('referencePaiement').value.trim()){
+    if(paiement !== 'Espèces' && paiement !== 'Crédit' && !document.getElementById('referencePaiement').value.trim()){
         alert('Saisissez la référence de transaction avant de valider.');
         document.getElementById('referencePaiement').focus();
         return false;
@@ -474,12 +486,31 @@ function validerPanier(event){
             return false;
         }
     }
+    document.getElementById('clientUuid').value = nouvelUuid();
+
+    // Hors-ligne : on enregistre la vente localement (IndexedDB) et on continue.
+    if (window.posOffline && navigator.onLine === false) {
+        const form = document.getElementById('formVenteRapide');
+        window.posOffline.mettreEnFile(form).then(function () {
+            panier = {};
+            afficherPanier();
+            document.getElementById('montantRecu').value = '0';
+            document.getElementById('remise').value = '0';
+            document.getElementById('pointsFideliteUtilises').value = '0';
+            alert('Hors-ligne : vente enregistrée localement. Elle sera synchronisée automatiquement au retour du réseau.');
+        });
+        return false;
+    }
+
     validationEnCours = true;
     const btn = document.getElementById('btnValiderPaiement');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Validation...';
     return true;
 }
+
+function nouvelUuid(){ return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(16).slice(2)); }
+function synchroniserHorsLigne(){ if(window.posOffline){ window.posOffline.synchroniser().then(function(r){ if(r && r.envoyees > 0) location.reload(); }); } }
 
 function cartesFiltrees(){
     const q = normaliser(document.getElementById('searchProduit')?.value || '');
@@ -536,6 +567,13 @@ function majHorloge(){
 
 document.addEventListener('DOMContentLoaded', function(){
     majInfosClient(); afficherPanier(); filtrerProduits(true); majModePaiement(); majHorloge(); setInterval(majHorloge, 30000);
+    if(window.posOffline){
+        window.posOffline.surChangement(function(n){
+            var z = document.getElementById('zoneHorsLigne');
+            document.getElementById('nbHorsLigne').innerText = n;
+            if(z) z.classList.toggle('d-none', !n);
+        });
+    }
     document.getElementById('codeManuel').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); chercherCodeManuel(); } });
     window.addEventListener('resize', function(){ filtrerProduits(false); });
 });

@@ -22,6 +22,7 @@ public class ParametrageComptable
     // Comptes SYSCOHADA paramétrables.
     public string CompteCaisse { get; set; } = "571";
     public string CompteBanque { get; set; } = "521";
+    public string CompteMobileMoney { get; set; } = "521";
     public string CompteClients { get; set; } = "411";
     public string CompteFournisseurs { get; set; } = "401";
     public string CompteVentes { get; set; } = "701";

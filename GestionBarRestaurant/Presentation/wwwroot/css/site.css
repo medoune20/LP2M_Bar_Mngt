@@ -3685,3 +3685,10 @@ body.lp2m-app .table > thead th {
     .lp2m-app main.lp2m-main { margin: 0 !important; max-width: 100% !important; padding: 0 !important; }
 }
 
+
+/* Panneau "ventes hors-ligne" du POS */
+.gbpos32-offline {
+    display: flex; align-items: center; justify-content: space-between; gap: .5rem;
+    margin-top: 8px; padding: .5rem .75rem; border-radius: 8px;
+    background: #fff4ce; border: 1px solid #f2d98c; color: #6b5800; font-size: .85rem;
+}

@@ -44,6 +44,7 @@
         </a>
         <span class="tenant-pill d-none d-md-inline-flex">@tenantCode · @tenantNom</span>
         <div class="lp2m-topbar-right">
+            <span id="lp2m-net" class="badge text-bg-warning" hidden><i class="bi bi-wifi-off me-1"></i><span class="d-none d-sm-inline">Hors-ligne</span></span>
             <span class="lp2m-user" title="@nom">
                 <i class="bi bi-person-circle"></i><span class="d-none d-sm-inline">@nom</span>
             </span>
@@ -216,6 +217,7 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="~/js/site.js"></script>
+    <script src="~/js/offline-pos.js"></script>
     @if (connecte)
     {
         <script>
@@ -252,6 +254,21 @@
             })();
         </script>
     }
+    <script>
+        // Indicateur réseau + enregistrement du service worker (mode hors-ligne PWA).
+        (function () {
+            var net = document.getElementById('lp2m-net');
+            function majReseau() { if (net) net.hidden = navigator.onLine; }
+            window.addEventListener('online', majReseau);
+            window.addEventListener('offline', majReseau);
+            majReseau();
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function () {
+                    navigator.serviceWorker.register('@Url.Content("~/sw.js")').catch(function () { });
+                });
+            }
+        })();
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

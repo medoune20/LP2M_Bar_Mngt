@@ -23,6 +23,10 @@ public class Vente
     public string Vendeur { get; set; } = string.Empty;
     public int VendeurId { get; set; }
 
+    /// <summary>Identifiant (GUID) d'idempotence : évite les doublons lors d'un
+    /// double-clic ou de la synchronisation d'une vente enregistrée hors-ligne.</summary>
+    public string ClientUuid { get; set; } = string.Empty;
+
     // Règles de gestion : rattachement à la session de caisse et cycle de vie.
     public int? CaisseSessionId { get; set; }
     public StatutVente Statut { get; set; } = StatutVente.Validee;

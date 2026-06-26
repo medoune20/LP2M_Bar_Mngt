@@ -1,0 +1,60 @@
+@model List<RapprochementLigneVm>
+@{
+    ViewData["Title"] = "Rapprochement des paiements";
+    var devise = ViewBag.Devise as string ?? "XOF";
+    Func<decimal, string> fcfa = v => string.Format("{0:N0} {1}", v, devise == "XOF" ? "FCFA" : devise);
+    var du = ViewBag.Du as string;
+    var au = ViewBag.Au as string;
+    var totalGeneral = Model.Sum(x => x.Total);
+    var nbGeneral = Model.Sum(x => x.Nombre);
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="fw-bold mb-1">Rapprochement par moyen de paiement</h1>
+        <p class="text-muted mb-0">Espèces, Mobile Money (Wave, Orange, MTN, Moov), carte, crédit — pour vérifier la caisse.</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index" asp-route-du="@du" asp-route-au="@au"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+</div>
+
+<form method="get" class="card mb-4">
+    <div class="card-body row g-2 align-items-end">
+        <div class="col-md-3"><label class="form-label">Du</label><input type="date" name="du" value="@du" class="form-control" /></div>
+        <div class="col-md-3"><label class="form-label">Au</label><input type="date" name="au" value="@au" class="form-control" /></div>
+        <div class="col-md-3 d-grid"><button class="btn btn-primary">Actualiser</button></div>
+    </div>
+</form>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr><th>Moyen de paiement</th><th>Catégorie</th><th class="text-center">Nb ventes</th><th class="text-end">Total encaissé</th><th class="text-end">Part</th></tr>
+            </thead>
+            <tbody>
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="5" class="text-center text-muted py-4">Aucune vente sur la période.</td></tr>
+                }
+                @foreach (var l in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@l.Mode</td>
+                        <td><span class="badge text-bg-light">@l.Categorie</span></td>
+                        <td class="text-center">@l.Nombre</td>
+                        <td class="text-end">@fcfa(l.Total)</td>
+                        <td class="text-end">@(totalGeneral > 0 ? string.Format("{0:N0}%", l.Total * 100 / totalGeneral) : "—")</td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="fw-bold border-top">
+                    <td colspan="2">Total</td>
+                    <td class="text-center">@nbGeneral</td>
+                    <td class="text-end">@fcfa(totalGeneral)</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>

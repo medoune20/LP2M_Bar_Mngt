@@ -31,6 +31,15 @@ public class BalanceLigneVm
     public decimal SoldeCrediteur => Math.Max(0, TotalCredit - TotalDebit);
 }
 
+/// <summary>Ligne de rapprochement des ventes par moyen de paiement.</summary>
+public class RapprochementLigneVm
+{
+    public string Mode { get; set; } = string.Empty;
+    public string Categorie { get; set; } = string.Empty;
+    public int Nombre { get; set; }
+    public decimal Total { get; set; }
+}
+
 /// <summary>Rapport comptable d'une période (trésorerie + écritures + balance).</summary>
 public class RapportComptaVm
 {
