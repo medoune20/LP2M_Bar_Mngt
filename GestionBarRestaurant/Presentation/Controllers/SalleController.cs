@@ -9,8 +9,8 @@ using Presentation.Filtres;
 namespace Presentation.Controllers;
 
 /// <summary>
-/// Service restaurant : plan de salle, ouverture d'une table, addition par table.
-/// Cloisonné par établissement (TenantId). Encaissement = étape ultérieure.
+/// Service restaurant : plan de salle, ouverture d'une table, addition par table,
+/// écran cuisine KDS et encaissement.
 /// </summary>
 [AutorisationFiltre(1, 2, 3)]
 public class SalleController : BaseController
@@ -60,7 +60,8 @@ public class SalleController : BaseController
             Nom = nom,
             Zone = string.IsNullOrWhiteSpace(zone) ? "Salle" : zone.Trim(),
             Capacite = capacite <= 0 ? 4 : capacite,
-            Ordre = ordre
+            Ordre = ordre,
+            Actif = true
         });
         _db.SaveChanges();
         TempData["Succes"] = "Table ajoutée.";
@@ -132,6 +133,7 @@ public class SalleController : BaseController
 
         var produit = _db.Produits.FirstOrDefault(p => p.Id == produitId && p.TenantId == TenantId && p.Actif);
         if (produit == null) { TempData["Erreur"] = "Produit introuvable."; return RedirectToAction(nameof(Commande), new { id = commandeId }); }
+        if (produit.StockActuel <= 0) { TempData["Erreur"] = $"Stock épuisé pour {produit.Nom}."; return RedirectToAction(nameof(Commande), new { id = commandeId }); }
 
         var qte = quantite <= 0 ? 1 : quantite;
         var ligne = commande.Lignes.FirstOrDefault(l => l.ProduitId == produitId && l.Preparation == StatutPreparation.EnAttente);
@@ -161,6 +163,11 @@ public class SalleController : BaseController
         if (ligne == null) return RedirectToAction(nameof(Index));
         var commande = _db.Commandes.FirstOrDefault(c => c.Id == ligne.CommandeId && c.TenantId == TenantId && c.Statut == StatutCommande.Ouverte);
         if (commande == null) { TempData["Erreur"] = "Addition non modifiable."; return RedirectToAction(nameof(Index)); }
+        if (ligne.Preparation != StatutPreparation.EnAttente)
+        {
+            TempData["Erreur"] = "Impossible de modifier la quantité : l'article a déjà été envoyé en cuisine.";
+            return RedirectToAction(nameof(Commande), new { id = commande.Id });
+        }
 
         if (quantite <= 0) _db.LignesCommande.Remove(ligne);
         else ligne.Quantite = quantite;
@@ -175,6 +182,12 @@ public class SalleController : BaseController
         if (ligne == null) return RedirectToAction(nameof(Index));
         var commande = _db.Commandes.FirstOrDefault(c => c.Id == ligne.CommandeId && c.TenantId == TenantId && c.Statut == StatutCommande.Ouverte);
         if (commande == null) { TempData["Erreur"] = "Addition non modifiable."; return RedirectToAction(nameof(Index)); }
+        if (ligne.Preparation != StatutPreparation.EnAttente)
+        {
+            TempData["Erreur"] = "Impossible de supprimer l'article : il a déjà été envoyé en cuisine.";
+            return RedirectToAction(nameof(Commande), new { id = commande.Id });
+        }
+
         _db.LignesCommande.Remove(ligne);
         _db.SaveChanges();
         return RedirectToAction(nameof(Commande), new { id = commande.Id });
@@ -312,31 +325,92 @@ public class SalleController : BaseController
     }
 
     [HttpGet]
-    public IActionResult Cuisine()
+    public IActionResult Cuisine(string statut = "actifs")
     {
+        statut = string.IsNullOrWhiteSpace(statut) ? "actifs" : statut.Trim().ToLowerInvariant();
+
         var commandes = _db.Commandes.Include(c => c.Lignes)
             .Where(c => c.TenantId == TenantId && c.Statut == StatutCommande.Ouverte)
             .OrderBy(c => c.DateOuverture)
-            .ToList()
-            .Where(c => c.Lignes.Any(l => l.Preparation == StatutPreparation.EnCuisine || l.Preparation == StatutPreparation.Prete))
             .ToList();
-        return View(commandes);
+
+        var visibles = statut switch
+        {
+            "preparation" => commandes.Where(c => c.Lignes.Any(l => l.Preparation == StatutPreparation.EnCuisine)),
+            "pretes" => commandes.Where(c => c.Lignes.Any(l => l.Preparation == StatutPreparation.Prete)),
+            "servies" => commandes.Where(c => c.Lignes.Any(l => l.Preparation == StatutPreparation.Servie)),
+            "toutes" => commandes.Where(c => c.Lignes.Any(l => l.Preparation != StatutPreparation.EnAttente)),
+            _ => commandes.Where(c => c.Lignes.Any(l => l.Preparation == StatutPreparation.EnCuisine || l.Preparation == StatutPreparation.Prete))
+        };
+
+        ViewBag.StatutFiltre = statut;
+        ViewBag.TotalPreparation = commandes.Sum(c => c.Lignes.Where(l => l.Preparation == StatutPreparation.EnCuisine).Sum(l => l.Quantite));
+        ViewBag.TotalPretes = commandes.Sum(c => c.Lignes.Where(l => l.Preparation == StatutPreparation.Prete).Sum(l => l.Quantite));
+        ViewBag.TotalServies = commandes.Sum(c => c.Lignes.Where(l => l.Preparation == StatutPreparation.Servie).Sum(l => l.Quantite));
+        ViewBag.CommandesActives = commandes.Count(c => c.Lignes.Any(l => l.Preparation == StatutPreparation.EnCuisine || l.Preparation == StatutPreparation.Prete));
+
+        return View(visibles.ToList());
     }
 
     [HttpPost]
-    public IActionResult MarquerLigne(int ligneId, int statut)
+    public IActionResult MarquerLigne(int ligneId, int statut, string? retour)
     {
         var ligne = _db.LignesCommande.FirstOrDefault(l => l.Id == ligneId);
         if (ligne == null) return RedirectToAction(nameof(Cuisine));
-        var autorise = _db.Commandes.Any(c => c.Id == ligne.CommandeId && c.TenantId == TenantId);
-        if (!autorise) return RedirectToAction(nameof(Cuisine));
 
-        if (statut >= 1 && statut <= 4)
+        var commande = _db.Commandes.FirstOrDefault(c => c.Id == ligne.CommandeId && c.TenantId == TenantId && c.Statut == StatutCommande.Ouverte);
+        if (commande == null) return RedirectToAction(nameof(Cuisine));
+
+        if (statut < (int)StatutPreparation.EnCuisine || statut > (int)StatutPreparation.Servie)
         {
-            ligne.Preparation = (StatutPreparation)statut;
-            _db.SaveChanges();
+            TempData["Erreur"] = "Statut de préparation invalide.";
+            return RedirectRetourKds(retour, commande.Id);
         }
+
+        ligne.Preparation = (StatutPreparation)statut;
+        _db.SaveChanges();
+        return RedirectRetourKds(retour, commande.Id);
+    }
+
+    [HttpPost]
+    public IActionResult MarquerCommandePrete(int commandeId)
+    {
+        var commande = _db.Commandes.Include(c => c.Lignes)
+            .FirstOrDefault(c => c.Id == commandeId && c.TenantId == TenantId && c.Statut == StatutCommande.Ouverte);
+        if (commande == null) return RedirectToAction(nameof(Cuisine));
+
+        var lignes = commande.Lignes.Where(l => l.Preparation == StatutPreparation.EnCuisine).ToList();
+        foreach (var ligne in lignes) ligne.Preparation = StatutPreparation.Prete;
+        if (lignes.Count > 0) _db.SaveChanges();
+
+        TempData["Succes"] = lignes.Count == 0
+            ? "Aucune ligne en préparation à marquer prête."
+            : $"Table {commande.TableNom} : {lignes.Count} ligne(s) marquée(s) prête(s).";
         return RedirectToAction(nameof(Cuisine));
+    }
+
+    [HttpPost]
+    public IActionResult MarquerCommandeServie(int commandeId)
+    {
+        var commande = _db.Commandes.Include(c => c.Lignes)
+            .FirstOrDefault(c => c.Id == commandeId && c.TenantId == TenantId && c.Statut == StatutCommande.Ouverte);
+        if (commande == null) return RedirectToAction(nameof(Cuisine));
+
+        var lignes = commande.Lignes.Where(l => l.Preparation == StatutPreparation.Prete).ToList();
+        foreach (var ligne in lignes) ligne.Preparation = StatutPreparation.Servie;
+        if (lignes.Count > 0) _db.SaveChanges();
+
+        TempData["Succes"] = lignes.Count == 0
+            ? "Aucune ligne prête à marquer servie."
+            : $"Table {commande.TableNom} : {lignes.Count} ligne(s) marquée(s) servie(s).";
+        return RedirectToAction(nameof(Cuisine));
+    }
+
+    private IActionResult RedirectRetourKds(string? retour, int commandeId)
+    {
+        return string.Equals(retour, "commande", StringComparison.OrdinalIgnoreCase)
+            ? RedirectToAction(nameof(Commande), new { id = commandeId })
+            : RedirectToAction(nameof(Cuisine));
     }
 
     private CaisseSession GetOrCreateCaisse()
