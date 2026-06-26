@@ -40,6 +40,41 @@ public class RapprochementLigneVm
     public decimal Total { get; set; }
 }
 
+public class CompteResultatLigneVm
+{
+    public string Compte { get; set; } = string.Empty;
+    public string Intitule { get; set; } = string.Empty;
+    public decimal Montant { get; set; }
+}
+
+/// <summary>Compte de résultat simplifié (produits classe 7 − charges classe 6).</summary>
+public class CompteResultatVm
+{
+    public DateTime Du { get; set; }
+    public DateTime Au { get; set; }
+    public string Devise { get; set; } = "XOF";
+    public List<CompteResultatLigneVm> Produits { get; set; } = new();
+    public List<CompteResultatLigneVm> Charges { get; set; } = new();
+    public decimal TotalProduits => Produits.Sum(x => x.Montant);
+    public decimal TotalCharges => Charges.Sum(x => x.Montant);
+    public decimal Resultat => TotalProduits - TotalCharges;
+}
+
+/// <summary>Déclaration de TVA d'une période.</summary>
+public class DeclarationTvaVm
+{
+    public DateTime Du { get; set; }
+    public DateTime Au { get; set; }
+    public string Devise { get; set; } = "XOF";
+    public decimal TauxTva { get; set; }
+    public bool Assujetti { get; set; }
+    public decimal BaseCollectee { get; set; }   // ventes HT
+    public decimal TvaCollectee { get; set; }
+    public decimal BaseDeductible { get; set; }   // achats/charges HT
+    public decimal TvaDeductible { get; set; }
+    public decimal TvaNette => TvaCollectee - TvaDeductible; // > 0 : à payer ; < 0 : crédit de TVA
+}
+
 /// <summary>Rapport comptable d'une période (trésorerie + écritures + balance).</summary>
 public class RapportComptaVm
 {

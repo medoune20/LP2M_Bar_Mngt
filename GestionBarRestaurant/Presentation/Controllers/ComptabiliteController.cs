@@ -67,6 +67,22 @@ public class ComptabiliteController : BaseController
         return View(_compta.Rapprochement(TenantId, d, a));
     }
 
+    public IActionResult CompteResultat(string? du, string? au)
+    {
+        var (d, a) = Periode(du, au);
+        ViewBag.Du = d.ToString("yyyy-MM-dd");
+        ViewBag.Au = a.ToString("yyyy-MM-dd");
+        return View(_compta.CompteResultat(TenantId, d, a));
+    }
+
+    public IActionResult DeclarationTva(string? du, string? au)
+    {
+        var (d, a) = Periode(du, au);
+        ViewBag.Du = d.ToString("yyyy-MM-dd");
+        ViewBag.Au = a.ToString("yyyy-MM-dd");
+        return View(_compta.DeclarationTva(TenantId, d, a));
+    }
+
     public IActionResult ExportEcritures(string? du, string? au)
     {
         var (d, a) = Periode(du, au);
