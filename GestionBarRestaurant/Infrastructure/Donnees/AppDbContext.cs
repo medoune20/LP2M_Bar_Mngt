@@ -103,6 +103,11 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<CleApi>().HasIndex(c => c.TenantId);
 
         // Service restaurant (tables + commandes).
+        // Le schéma SQLite historique crée la table "TablesResto" ; sans ToTable,
+        // EF Core requête "Tables" à partir du DbSet, ce qui fait planter le démarrage.
+        modelBuilder.Entity<TableResto>().ToTable("TablesResto");
+        modelBuilder.Entity<Commande>().ToTable("Commandes");
+        modelBuilder.Entity<LigneCommande>().ToTable("LignesCommande");
         modelBuilder.Entity<Commande>()
             .HasMany(c => c.Lignes)
             .WithOne()
