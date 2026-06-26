@@ -32,6 +32,9 @@ builder.Services.AddSignalR();
 // Comptabilité OHADA (moteur d'écritures + API d'interfaçage).
 builder.Services.AddScoped<Infrastructure.Services.ComptabiliteService>();
 
+// Documentation OpenAPI de l'API comptable (/openapi/v1.json).
+builder.Services.AddOpenApi();
+
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
 var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
 var googleConfigured = !string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret);
@@ -121,6 +124,9 @@ app.UseAuthorization();
 
 // API REST (contrôleurs à routage par attribut, ex. /api/v1/...).
 app.MapControllers();
+
+// Spécification OpenAPI de l'API (importable dans Postman / Swagger UI).
+app.MapOpenApi();
 
 app.MapControllerRoute(name: "default", pattern: "{controller=Accueil}/{action=Index}/{id?}");
 

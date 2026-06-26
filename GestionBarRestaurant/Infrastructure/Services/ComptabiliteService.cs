@@ -158,6 +158,39 @@ public class ComptabiliteService
         return rapport;
     }
 
+    public CompteResultatVm CompteResultat(int tenantId, DateTime du, DateTime au)
+    {
+        var rapport = GenererRapport(tenantId, du, au);
+        var vm = new CompteResultatVm { Du = du.Date, Au = au.Date, Devise = rapport.Devise };
+
+        vm.Produits = rapport.Balance
+            .Where(b => b.Compte.StartsWith("7") && b.SoldeCrediteur != 0)
+            .Select(b => new CompteResultatLigneVm { Compte = b.Compte, Intitule = b.Intitule, Montant = b.SoldeCrediteur })
+            .ToList();
+        vm.Charges = rapport.Balance
+            .Where(b => b.Compte.StartsWith("6") && b.SoldeDebiteur != 0)
+            .Select(b => new CompteResultatLigneVm { Compte = b.Compte, Intitule = b.Intitule, Montant = b.SoldeDebiteur })
+            .ToList();
+        return vm;
+    }
+
+    public DeclarationTvaVm DeclarationTva(int tenantId, DateTime du, DateTime au)
+    {
+        var rapport = GenererRapport(tenantId, du, au);
+        return new DeclarationTvaVm
+        {
+            Du = du.Date,
+            Au = au.Date,
+            Devise = rapport.Devise,
+            TauxTva = rapport.TauxTva,
+            Assujetti = rapport.AssujettiTva,
+            BaseCollectee = rapport.Recettes - rapport.TvaCollectee,
+            TvaCollectee = rapport.TvaCollectee,
+            BaseDeductible = rapport.Depenses - rapport.TvaDeductible,
+            TvaDeductible = rapport.TvaDeductible
+        };
+    }
+
     private static LigneEcritureVm Ligne(string compte, decimal debit, decimal credit)
         => new() { Compte = compte, Intitule = ComptabiliteOhada.Intitule(compte), Debit = debit, Credit = credit };
 

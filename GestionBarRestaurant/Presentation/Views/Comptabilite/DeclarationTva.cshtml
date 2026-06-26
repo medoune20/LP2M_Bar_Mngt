@@ -1,0 +1,41 @@
+@model DeclarationTvaVm
+@{
+    ViewData["Title"] = "Déclaration TVA";
+    Func<decimal, string> fcfa = v => string.Format("{0:N0} {1}", v, Model.Devise == "XOF" ? "FCFA" : Model.Devise);
+    var du = ViewBag.Du as string;
+    var au = ViewBag.Au as string;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="fw-bold mb-1">Déclaration de TVA</h1>
+        <p class="text-muted mb-0">Du @Model.Du.ToString("dd/MM/yyyy") au @Model.Au.ToString("dd/MM/yyyy") — taux @Model.TauxTva.ToString("0")%</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index" asp-route-du="@du" asp-route-au="@au"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+</div>
+
+@if (!Model.Assujetti)
+{
+    <div class="alert alert-secondary">Cet établissement est paramétré <strong>non assujetti à la TVA</strong>. Aucune TVA n'est calculée. (Modifiable dans Paramétrage.)</div>
+}
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <tbody>
+                <tr><td>Base imposable collectée (ventes HT)</td><td class="text-end">@fcfa(Model.BaseCollectee)</td></tr>
+                <tr><td><strong>TVA collectée</strong> (sur ventes)</td><td class="text-end fw-bold">@fcfa(Model.TvaCollectee)</td></tr>
+                <tr><td>Base déductible (achats &amp; charges HT)</td><td class="text-end">@fcfa(Model.BaseDeductible)</td></tr>
+                <tr><td><strong>TVA déductible</strong> (sur achats)</td><td class="text-end fw-bold">@fcfa(Model.TvaDeductible)</td></tr>
+            </tbody>
+            <tfoot>
+                <tr class="fw-bold border-top">
+                    <td>@(Model.TvaNette >= 0 ? "TVA nette à payer" : "Crédit de TVA à reporter")</td>
+                    <td class="text-end @(Model.TvaNette >= 0 ? "text-danger" : "text-success")">@fcfa(Math.Abs(Model.TvaNette))</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<p class="text-muted small mt-2">TVA nette = TVA collectée − TVA déductible. Document d'aide ; la déclaration officielle reste à déposer auprès de la DGI.</p>
