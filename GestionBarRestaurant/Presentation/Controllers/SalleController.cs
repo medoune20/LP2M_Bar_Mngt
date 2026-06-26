@@ -294,6 +294,51 @@ public class SalleController : BaseController
         }
     }
 
+    // --- Envoi en cuisine + écran KDS ---
+    [HttpPost]
+    public IActionResult EnvoyerCuisine(int commandeId)
+    {
+        var commande = _db.Commandes.Include(c => c.Lignes)
+            .FirstOrDefault(c => c.Id == commandeId && c.TenantId == TenantId && c.Statut == StatutCommande.Ouverte);
+        if (commande == null) { TempData["Erreur"] = "Addition introuvable."; return RedirectToAction(nameof(Index)); }
+
+        var aEnvoyer = commande.Lignes.Where(l => l.Preparation == StatutPreparation.EnAttente).ToList();
+        if (aEnvoyer.Count == 0) { TempData["Erreur"] = "Aucun nouvel article à envoyer."; return RedirectToAction(nameof(Commande), new { id = commandeId }); }
+
+        foreach (var l in aEnvoyer) l.Preparation = StatutPreparation.EnCuisine;
+        _db.SaveChanges();
+        TempData["Succes"] = $"{aEnvoyer.Count} article(s) envoyé(s) en cuisine.";
+        return RedirectToAction(nameof(Commande), new { id = commandeId });
+    }
+
+    [HttpGet]
+    public IActionResult Cuisine()
+    {
+        var commandes = _db.Commandes.Include(c => c.Lignes)
+            .Where(c => c.TenantId == TenantId && c.Statut == StatutCommande.Ouverte)
+            .OrderBy(c => c.DateOuverture)
+            .ToList()
+            .Where(c => c.Lignes.Any(l => l.Preparation == StatutPreparation.EnCuisine || l.Preparation == StatutPreparation.Prete))
+            .ToList();
+        return View(commandes);
+    }
+
+    [HttpPost]
+    public IActionResult MarquerLigne(int ligneId, int statut)
+    {
+        var ligne = _db.LignesCommande.FirstOrDefault(l => l.Id == ligneId);
+        if (ligne == null) return RedirectToAction(nameof(Cuisine));
+        var autorise = _db.Commandes.Any(c => c.Id == ligne.CommandeId && c.TenantId == TenantId);
+        if (!autorise) return RedirectToAction(nameof(Cuisine));
+
+        if (statut >= 1 && statut <= 4)
+        {
+            ligne.Preparation = (StatutPreparation)statut;
+            _db.SaveChanges();
+        }
+        return RedirectToAction(nameof(Cuisine));
+    }
+
     private CaisseSession GetOrCreateCaisse()
     {
         var caisse = _db.Caisses
