@@ -12,6 +12,7 @@ public static class ModulesApp
     {
         ("dashboard",          "Tableau de bord"),
         ("caisse_rapide",      "Caisse rapide POS"),
+        ("restaurant",         "Service restaurant (tables)"),
         ("ventes",             "Ventes / tickets"),
         ("caisse",             "Sessions de caisse"),
         ("produits",           "Produits"),
@@ -32,13 +33,13 @@ public static class ModulesApp
     };
 
     public const string PermissionsAdministrateur =
-        "dashboard=CM;caisse_rapide=CM;ventes=CM;caisse=CM;produits=CM;categories=CM;stock=CM;clients=CM;fidelite=CM;depenses=CM;rapports=CM;comptabilite=CM;previsions=CM;evaluation_caissiers=CM;utilisateurs=CM;profils=CM;tenants=CM;sauvegarde=CM;parametres=CM";
+        "dashboard=CM;caisse_rapide=CM;restaurant=CM;ventes=CM;caisse=CM;produits=CM;categories=CM;stock=CM;clients=CM;fidelite=CM;depenses=CM;rapports=CM;comptabilite=CM;previsions=CM;evaluation_caissiers=CM;utilisateurs=CM;profils=CM;tenants=CM;sauvegarde=CM;parametres=CM";
 
     public const string PermissionsManager =
-        "dashboard=C;caisse_rapide=CM;ventes=CM;caisse=CM;produits=CM;categories=CM;stock=CM;clients=CM;fidelite=CM;depenses=CM;rapports=C;comptabilite=CM;previsions=C;evaluation_caissiers=C;parametres=C";
+        "dashboard=C;caisse_rapide=CM;restaurant=CM;ventes=CM;caisse=CM;produits=CM;categories=CM;stock=CM;clients=CM;fidelite=CM;depenses=CM;rapports=C;comptabilite=CM;previsions=C;evaluation_caissiers=C;parametres=C";
 
     public const string PermissionsCaissier =
-        "dashboard=C;caisse_rapide=CM;ventes=C;caisse=C;produits=C;categories=C;stock=C;clients=C;fidelite=C";
+        "dashboard=C;caisse_rapide=CM;restaurant=CM;ventes=C;caisse=C;produits=C;categories=C;stock=C;clients=C;fidelite=C";
 
     public static string PermissionsPourRole(RoleUtilisateur role) => role switch
     {

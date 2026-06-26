@@ -1,0 +1,58 @@
+@model List<TableEtatVm>
+@{
+    ViewData["Title"] = "Plan de salle";
+    var role = Context.Session.GetInt32("UtilisateurRole") ?? 0;
+    var isSuperAdmin = Context.Session.GetString("IsSuperAdmin") == "true";
+    var gestion = role == 1 || role == 3 || isSuperAdmin;
+    Func<decimal, string> fcfa = v => string.Format("{0:N0} FCFA", v);
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="fw-bold mb-1">Plan de salle</h1>
+        <p class="text-muted mb-0">Ouvrez une table, ajoutez les articles, encaissez l'addition.</p>
+    </div>
+    @if (gestion)
+    {
+        <a class="btn btn-outline-secondary" asp-action="Tables"><i class="bi bi-grid-3x3-gap me-1"></i>Gérer les tables</a>
+    }
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Aucune table configurée. @(gestion ? "Cliquez sur « Gérer les tables » pour en créer." : "Demandez à un responsable de configurer la salle.")</div>
+}
+
+@foreach (var zone in Model.GroupBy(e => string.IsNullOrWhiteSpace(e.Table.Zone) ? "Salle" : e.Table.Zone))
+{
+    <h5 class="fw-bold mt-3 mb-2">@zone.Key</h5>
+    <div class="row g-3">
+        @foreach (var e in zone)
+        {
+            <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+                <div class="card h-100 @(e.Occupee ? "border-danger" : "border-success")">
+                    <div class="card-body text-center p-3">
+                        <div class="fs-5 fw-bold">@e.Table.Nom</div>
+                        <div class="text-muted small mb-2"><i class="bi bi-people"></i> @e.Table.Capacite</div>
+                        @if (e.Occupee)
+                        {
+                            <span class="badge text-bg-danger mb-2">Occupée</span>
+                            <div class="fw-bold mb-2">@fcfa(e.Total)</div>
+                            <a class="btn btn-sm btn-primary w-100" asp-action="Commande" asp-route-id="@e.Commande!.Id"><i class="bi bi-receipt me-1"></i>Addition</a>
+                        }
+                        else
+                        {
+                            <span class="badge text-bg-success mb-2">Libre</span>
+                            <form asp-action="Ouvrir" method="post" class="d-grid gap-1">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="tableId" value="@e.Table.Id" />
+                                <input type="number" name="couverts" value="@e.Table.Capacite" min="1" class="form-control form-control-sm" title="Couverts" />
+                                <button class="btn btn-sm btn-outline-success"><i class="bi bi-door-open me-1"></i>Ouvrir</button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

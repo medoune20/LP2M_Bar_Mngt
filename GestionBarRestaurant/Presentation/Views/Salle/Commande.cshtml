@@ -1,0 +1,155 @@
+@model Commande
+@{
+    ViewData["Title"] = "Addition " + Model.TableNom;
+    var produits = ViewBag.Produits as List<Produit> ?? new List<Produit>();
+    var categories = ViewBag.Categories as List<string> ?? new List<string>();
+    Func<decimal, string> fcfa = v => string.Format("{0:N0} FCFA", v);
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="fw-bold mb-1">Table @Model.TableNom</h1>
+        <p class="text-muted mb-0">Addition @Model.Numero · @Model.Couverts couvert(s) · ouverte par @Model.OuvertePar</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Plan de salle</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header bg-white d-flex flex-wrap gap-1">
+                <button type="button" class="btn btn-sm btn-outline-primary cat-filtre actif" data-cat="" onclick="filtrerCat(this)">Tous</button>
+                @foreach (var c in categories)
+                {
+                    <button type="button" class="btn btn-sm btn-outline-primary cat-filtre" data-cat="@c.ToLowerInvariant()" onclick="filtrerCat(this)">@c</button>
+                }
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    @foreach (var p in produits)
+                    {
+                        <div class="col-6 col-md-4 produit-carte" data-cat="@p.Categorie.ToLowerInvariant()">
+                            <form asp-action="AjouterLigne" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="commandeId" value="@Model.Id" />
+                                <input type="hidden" name="produitId" value="@p.Id" />
+                                <input type="hidden" name="quantite" value="1" />
+                                <button class="btn btn-outline-dark w-100 text-start p-2" type="submit">
+                                    <div class="fw-semibold text-truncate">@p.Nom</div>
+                                    <div class="small text-primary">@fcfa(p.PrixVente)</div>
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <span class="fw-semibold"><i class="bi bi-receipt me-1"></i>Addition</span>
+                @{ var aEnvoyer = Model.Lignes.Any(l => l.Preparation == StatutPreparation.EnAttente); }
+                <form asp-action="EnvoyerCuisine" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="commandeId" value="@Model.Id" />
+                    <button class="btn btn-sm btn-warning" @(aEnvoyer ? "" : "disabled")><i class="bi bi-fire me-1"></i>Envoyer en cuisine</button>
+                </form>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <tbody>
+                        @if (!Model.Lignes.Any()) { <tr><td colspan="3" class="text-center text-muted py-4">Aucun article. Touchez un produit pour l'ajouter.</td></tr> }
+                        @foreach (var l in Model.Lignes)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@l.ProduitNom</div>
+                                    <div class="small text-muted">
+                                        @fcfa(l.PrixUnitaire)
+                                        @if (l.Preparation == StatutPreparation.EnCuisine) { <span class="badge text-bg-warning ms-1">En cuisine</span> }
+                                        else if (l.Preparation == StatutPreparation.Prete) { <span class="badge text-bg-success ms-1">Prêt</span> }
+                                        else if (l.Preparation == StatutPreparation.Servie) { <span class="badge text-bg-secondary ms-1">Servi</span> }
+                                    </div>
+                                </td>
+                                <td style="width:130px;">
+                                    <form asp-action="ModifierQuantite" method="post" class="d-flex align-items-center gap-1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="ligneId" value="@l.Id" />
+                                        <input type="number" name="quantite" value="@l.Quantite" min="0" class="form-control form-control-sm" style="width:64px;" />
+                                        <button class="btn btn-sm btn-outline-secondary" title="Mettre à jour"><i class="bi bi-check2"></i></button>
+                                    </form>
+                                </td>
+                                <td class="text-end">
+                                    <div class="fw-semibold">@fcfa(l.Total)</div>
+                                    <form asp-action="SupprimerLigne" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="ligneId" value="@l.Id" />
+                                        <button class="btn btn-sm btn-link text-danger p-0" title="Retirer"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold border-top"><td>Total</td><td></td><td class="text-end fs-5">@fcfa(Model.Total)</td></tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="card-footer">
+                <form asp-action="Encaisser" method="post" class="row g-2 align-items-end">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="commandeId" value="@Model.Id" />
+                    <div class="col-12">
+                        <label class="form-label mb-1">Mode de paiement</label>
+                        <select name="modePaiement" id="modeEnc" class="form-select form-select-sm" onchange="majRefEnc()">
+                            <option>Espèces</option>
+                            <option>Wave</option>
+                            <option>Orange Money</option>
+                            <option>MTN MoMo</option>
+                            <option>Moov Money</option>
+                            <option>Carte bancaire</option>
+                        </select>
+                    </div>
+                    <div class="col-6" id="zoneMontantEnc">
+                        <label class="form-label mb-1">Montant reçu</label>
+                        <input name="montantRecu" type="number" min="0" value="@((long)Model.Total)" class="form-control form-control-sm" />
+                    </div>
+                    <div class="col-6 d-none" id="zoneRefEnc">
+                        <label class="form-label mb-1">Référence</label>
+                        <input name="referencePaiement" class="form-control form-control-sm" placeholder="OM / Wave / TPE…" />
+                    </div>
+                    <div class="col-12 d-grid">
+                        <button class="btn btn-success" @(Model.Lignes.Any() ? "" : "disabled")>
+                            <i class="bi bi-cash-coin me-1"></i>Encaisser @fcfa(Model.Total)
+                        </button>
+                    </div>
+                </form>
+                <form asp-action="Annuler" method="post" class="mt-2 d-grid" onsubmit="return confirm('Annuler cette addition et libérer la table ?')">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="commandeId" value="@Model.Id" />
+                    <button class="btn btn-outline-danger btn-sm"><i class="bi bi-x-circle me-1"></i>Annuler l'addition</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function filtrerCat(btn){
+    document.querySelectorAll('.cat-filtre').forEach(b => b.classList.remove('actif'));
+    btn.classList.add('actif');
+    var cat = btn.getAttribute('data-cat') || '';
+    document.querySelectorAll('.produit-carte').forEach(function(c){
+        c.style.display = (!cat || c.getAttribute('data-cat') === cat) ? '' : 'none';
+    });
+}
+function majRefEnc(){
+    var esp = document.getElementById('modeEnc').value === 'Espèces';
+    document.getElementById('zoneMontantEnc').classList.toggle('d-none', !esp);
+    document.getElementById('zoneRefEnc').classList.toggle('d-none', esp);
+}
+</script>
+}

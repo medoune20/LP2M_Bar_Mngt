@@ -39,3 +39,19 @@ public enum TypeMouvementCaisse
     Retrait = 2,
     ReglementCredit = 3
 }
+
+public enum StatutCommande
+{
+    Ouverte = 1,
+    Encaissee = 2,
+    Annulee = 3
+}
+
+/// <summary>Cycle de préparation d'une ligne de commande (écran cuisine / KDS).</summary>
+public enum StatutPreparation
+{
+    EnAttente = 1,
+    EnCuisine = 2,
+    Prete = 3,
+    Servie = 4
+}
