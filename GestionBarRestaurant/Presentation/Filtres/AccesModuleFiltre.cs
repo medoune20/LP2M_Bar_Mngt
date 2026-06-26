@@ -22,13 +22,20 @@ public class AccesModuleFiltre : IActionFilter
         { "Depense", "depenses" },
         { "Rapport", "rapports" },
         { "Comptabilite", "comptabilite" },
-        { "Salle", "restaurant" },
         { "Prevision", "previsions" },
         { "EvaluationCaissier", "evaluation_caissiers" },
         { "Utilisateur", "utilisateurs" },
         { "Profil", "profils" },
         { "Tenant", "tenants" },
         { "Sauvegarde", "sauvegarde" }
+    };
+
+    private static readonly HashSet<string> ActionsKds = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Cuisine",
+        "MarquerLigne",
+        "MarquerCommandePrete",
+        "MarquerCommandeServie"
     };
 
     public void OnActionExecuting(ActionExecutingContext context)
@@ -64,6 +71,13 @@ public class AccesModuleFiltre : IActionFilter
                    string.Equals(action, "CreerClientRapide", StringComparison.OrdinalIgnoreCase)
                 ? "caisse_rapide"
                 : "ventes";
+        }
+
+        if (string.Equals(ctrl, "Salle", StringComparison.OrdinalIgnoreCase))
+        {
+            return action != null && ActionsKds.Contains(action)
+                ? "cuisine_kds"
+                : "restaurant";
         }
 
         if (MapControleur.TryGetValue(ctrl, out var module)) return module;
