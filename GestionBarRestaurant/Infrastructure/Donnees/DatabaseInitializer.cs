@@ -15,7 +15,8 @@ public static class DatabaseInitializer
     {
         "Tenants", "Utilisateurs", "Clients", "Produits", "Categories", "Ventes", "LignesVente",
         "Caisses", "MouvementsStock", "Depenses", "ReglesFidelite", "MouvementsFidelite",
-        "MouvementsCaisse", "ProfilsAcces", "MessagesChat", "ParametragesComptables", "ClesApi"
+        "MouvementsCaisse", "ProfilsAcces", "MessagesChat", "ParametragesComptables", "ClesApi",
+        "TablesResto", "Commandes", "LignesCommande"
     };
 
     public static void Initialiser(AppDbContext db)
@@ -444,6 +445,52 @@ CREATE TABLE IF NOT EXISTS ""ClesApi"" (
 );");
         db.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_ClesApi_CleHash"" ON ""ClesApi"" (""CleHash"");");
         db.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_ClesApi_TenantId"" ON ""ClesApi"" (""TenantId"");");
+
+        // --- Service restaurant ---
+        db.Database.ExecuteSqlRaw(@"
+CREATE TABLE IF NOT EXISTS ""TablesResto"" (
+    ""Id"" INTEGER NOT NULL CONSTRAINT ""PK_TablesResto"" PRIMARY KEY AUTOINCREMENT,
+    ""TenantId"" INTEGER NOT NULL,
+    ""Nom"" TEXT NOT NULL DEFAULT '',
+    ""Zone"" TEXT NOT NULL DEFAULT 'Salle',
+    ""Capacite"" INTEGER NOT NULL DEFAULT 4,
+    ""Ordre"" INTEGER NOT NULL DEFAULT 0,
+    ""Actif"" INTEGER NOT NULL DEFAULT 1
+);");
+        db.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_TablesResto_TenantId"" ON ""TablesResto"" (""TenantId"");");
+
+        db.Database.ExecuteSqlRaw(@"
+CREATE TABLE IF NOT EXISTS ""Commandes"" (
+    ""Id"" INTEGER NOT NULL CONSTRAINT ""PK_Commandes"" PRIMARY KEY AUTOINCREMENT,
+    ""TenantId"" INTEGER NOT NULL,
+    ""TableId"" INTEGER NOT NULL,
+    ""TableNom"" TEXT NOT NULL DEFAULT '',
+    ""Numero"" TEXT NOT NULL DEFAULT '',
+    ""Statut"" INTEGER NOT NULL DEFAULT 1,
+    ""DateOuverture"" TEXT NOT NULL,
+    ""DateCloture"" TEXT NULL,
+    ""OuvertePar"" TEXT NOT NULL DEFAULT '',
+    ""Couverts"" INTEGER NOT NULL DEFAULT 1,
+    ""ClientNom"" TEXT NOT NULL DEFAULT '',
+    ""Note"" TEXT NOT NULL DEFAULT '',
+    ""VenteId"" INTEGER NULL
+);");
+        db.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_Commandes_TenantId_TableId_Statut"" ON ""Commandes"" (""TenantId"", ""TableId"", ""Statut"");");
+
+        db.Database.ExecuteSqlRaw(@"
+CREATE TABLE IF NOT EXISTS ""LignesCommande"" (
+    ""Id"" INTEGER NOT NULL CONSTRAINT ""PK_LignesCommande"" PRIMARY KEY AUTOINCREMENT,
+    ""CommandeId"" INTEGER NOT NULL,
+    ""ProduitId"" INTEGER NOT NULL,
+    ""ProduitNom"" TEXT NOT NULL DEFAULT '',
+    ""Quantite"" INTEGER NOT NULL DEFAULT 1,
+    ""PrixUnitaire"" REAL NOT NULL DEFAULT 0,
+    ""PrixAchatUnitaire"" REAL NOT NULL DEFAULT 0,
+    ""Note"" TEXT NOT NULL DEFAULT '',
+    ""Preparation"" INTEGER NOT NULL DEFAULT 1,
+    CONSTRAINT ""FK_LignesCommande_Commandes_CommandeId"" FOREIGN KEY (""CommandeId"") REFERENCES ""Commandes"" (""Id"") ON DELETE CASCADE
+);");
+        db.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_LignesCommande_CommandeId"" ON ""LignesCommande"" (""CommandeId"");");
     }
 
     private static void AjouterColonneSiAbsente(AppDbContext db, string table, string colonne, string definition)

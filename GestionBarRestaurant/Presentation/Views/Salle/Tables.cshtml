@@ -1,0 +1,52 @@
+@model List<TableResto>
+@{
+    ViewData["Title"] = "Gérer les tables";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="fw-bold mb-0">Gérer les tables</h1>
+    <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Plan de salle</a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form asp-action="CreerTable" method="post" class="row g-2 align-items-end">
+            @Html.AntiForgeryToken()
+            <div class="col-md-3"><label class="form-label">Nom / numéro</label><input name="nom" class="form-control" placeholder="Ex : T1, Terrasse 3" required /></div>
+            <div class="col-md-3"><label class="form-label">Zone</label><input name="zone" class="form-control" value="Salle" /></div>
+            <div class="col-md-2"><label class="form-label">Couverts</label><input name="capacite" type="number" min="1" value="4" class="form-control" /></div>
+            <div class="col-md-2"><label class="form-label">Ordre</label><input name="ordre" type="number" value="0" class="form-control" /></div>
+            <div class="col-md-2 d-grid"><button class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>Ajouter</button></div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead><tr><th>Nom</th><th>Zone</th><th class="text-center">Couverts</th><th class="text-center">Ordre</th><th class="text-center">Statut</th><th></th></tr></thead>
+            <tbody>
+                @if (!Model.Any()) { <tr><td colspan="6" class="text-center text-muted py-4">Aucune table.</td></tr> }
+                @foreach (var t in Model)
+                {
+                    <tr class="@(t.Actif ? "" : "text-muted")">
+                        <td class="fw-semibold">@t.Nom</td>
+                        <td>@t.Zone</td>
+                        <td class="text-center">@t.Capacite</td>
+                        <td class="text-center">@t.Ordre</td>
+                        <td class="text-center">@(t.Actif ? Html.Raw("<span class='badge text-bg-success'>Active</span>") : Html.Raw("<span class='badge text-bg-secondary'>Retirée</span>"))</td>
+                        <td class="text-end">
+                            @if (t.Actif)
+                            {
+                                <form asp-action="SupprimerTable" asp-route-id="@t.Id" method="post" class="d-inline" onsubmit="return confirm('Retirer cette table ?')">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-danger">Retirer</button>
+                                </form>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

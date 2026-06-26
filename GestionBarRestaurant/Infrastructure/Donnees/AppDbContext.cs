@@ -26,6 +26,9 @@ public class AppDbContext : DbContext
     public DbSet<MessageChat> MessagesChat => Set<MessageChat>();
     public DbSet<ParametrageComptable> ParametragesComptables => Set<ParametrageComptable>();
     public DbSet<CleApi> ClesApi => Set<CleApi>();
+    public DbSet<TableResto> Tables => Set<TableResto>();
+    public DbSet<Commande> Commandes => Set<Commande>();
+    public DbSet<LigneCommande> LignesCommande => Set<LigneCommande>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -98,6 +101,17 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ParametrageComptable>().Property(p => p.TauxTva).HasConversion<double>();
         modelBuilder.Entity<CleApi>().HasIndex(c => c.CleHash);
         modelBuilder.Entity<CleApi>().HasIndex(c => c.TenantId);
+
+        // Service restaurant (tables + commandes).
+        modelBuilder.Entity<Commande>()
+            .HasMany(c => c.Lignes)
+            .WithOne()
+            .HasForeignKey("CommandeId")
+            .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Commande>().HasIndex(c => new { c.TenantId, c.TableId, c.Statut });
+        modelBuilder.Entity<TableResto>().HasIndex(t => t.TenantId);
+        modelBuilder.Entity<LigneCommande>().Property(l => l.PrixUnitaire).HasConversion<double>();
+        modelBuilder.Entity<LigneCommande>().Property(l => l.PrixAchatUnitaire).HasConversion<double>();
 
         base.OnModelCreating(modelBuilder);
     }

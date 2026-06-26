@@ -1,0 +1,110 @@
+@model Commande
+@{
+    ViewData["Title"] = "Addition " + Model.TableNom;
+    var produits = ViewBag.Produits as List<Produit> ?? new List<Produit>();
+    var categories = ViewBag.Categories as List<string> ?? new List<string>();
+    Func<decimal, string> fcfa = v => string.Format("{0:N0} FCFA", v);
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="fw-bold mb-1">Table @Model.TableNom</h1>
+        <p class="text-muted mb-0">Addition @Model.Numero · @Model.Couverts couvert(s) · ouverte par @Model.OuvertePar</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Plan de salle</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header bg-white d-flex flex-wrap gap-1">
+                <button type="button" class="btn btn-sm btn-outline-primary cat-filtre actif" data-cat="" onclick="filtrerCat(this)">Tous</button>
+                @foreach (var c in categories)
+                {
+                    <button type="button" class="btn btn-sm btn-outline-primary cat-filtre" data-cat="@c.ToLowerInvariant()" onclick="filtrerCat(this)">@c</button>
+                }
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    @foreach (var p in produits)
+                    {
+                        <div class="col-6 col-md-4 produit-carte" data-cat="@p.Categorie.ToLowerInvariant()">
+                            <form asp-action="AjouterLigne" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="commandeId" value="@Model.Id" />
+                                <input type="hidden" name="produitId" value="@p.Id" />
+                                <input type="hidden" name="quantite" value="1" />
+                                <button class="btn btn-outline-dark w-100 text-start p-2" type="submit">
+                                    <div class="fw-semibold text-truncate">@p.Nom</div>
+                                    <div class="small text-primary">@fcfa(p.PrixVente)</div>
+                                </button>
+                            </form>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header bg-white fw-semibold"><i class="bi bi-receipt me-1"></i>Addition</div>
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <tbody>
+                        @if (!Model.Lignes.Any()) { <tr><td colspan="3" class="text-center text-muted py-4">Aucun article. Touchez un produit pour l'ajouter.</td></tr> }
+                        @foreach (var l in Model.Lignes)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="fw-semibold">@l.ProduitNom</div>
+                                    <div class="small text-muted">@fcfa(l.PrixUnitaire)</div>
+                                </td>
+                                <td style="width:130px;">
+                                    <form asp-action="ModifierQuantite" method="post" class="d-flex align-items-center gap-1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="ligneId" value="@l.Id" />
+                                        <input type="number" name="quantite" value="@l.Quantite" min="0" class="form-control form-control-sm" style="width:64px;" />
+                                        <button class="btn btn-sm btn-outline-secondary" title="Mettre à jour"><i class="bi bi-check2"></i></button>
+                                    </form>
+                                </td>
+                                <td class="text-end">
+                                    <div class="fw-semibold">@fcfa(l.Total)</div>
+                                    <form asp-action="SupprimerLigne" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="ligneId" value="@l.Id" />
+                                        <button class="btn btn-sm btn-link text-danger p-0" title="Retirer"><i class="bi bi-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold border-top"><td>Total</td><td></td><td class="text-end fs-5">@fcfa(Model.Total)</td></tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="card-footer d-flex gap-2">
+                <button class="btn btn-success flex-fill" disabled title="Encaissement : étape suivante"><i class="bi bi-cash-coin me-1"></i>Encaisser</button>
+                <form asp-action="Annuler" method="post" onsubmit="return confirm('Annuler cette addition et libérer la table ?')">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="commandeId" value="@Model.Id" />
+                    <button class="btn btn-outline-danger"><i class="bi bi-x-circle me-1"></i>Annuler</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+function filtrerCat(btn){
+    document.querySelectorAll('.cat-filtre').forEach(b => b.classList.remove('actif'));
+    btn.classList.add('actif');
+    var cat = btn.getAttribute('data-cat') || '';
+    document.querySelectorAll('.produit-carte').forEach(function(c){
+        c.style.display = (!cat || c.getAttribute('data-cat') === cat) ? '' : 'none';
+    });
+}
+</script>
+}
