@@ -1,14 +1,13 @@
 name: Deploy - GestionBarRestaurant
 
 # Déploiement automatique sur le serveur distant à chaque push sur main
-# (ou manuellement via "Run workflow").
+# ou manuellement via "Run workflow".
 #
-# PRÉREQUIS sur le serveur (une seule fois) :
-#   git clone https://github.com/medoune20/LP2M_Bar_Mngt.git /opt/lp2m
-#   (Docker + plugin compose installés)
+# Le job ne tente plus une connexion SSH si les secrets obligatoires sont absents.
+# Cela évite les échecs immédiats du type : "missing server host".
 #
 # SECRETS à définir dans GitHub (Settings → Secrets and variables → Actions) :
-#   DEPLOY_HOST     IP ou domaine du serveur            (ex. 51.x.x.x)
+#   DEPLOY_HOST     IP ou domaine du serveur            (ex. lp2medoune.com)
 #   DEPLOY_USER     utilisateur SSH                      (ex. root)
 #   DEPLOY_SSH_KEY  clé privée SSH (contenu complet)
 #   DEPLOY_PORT     port SSH (optionnel, défaut 22)
@@ -30,23 +29,59 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: production
+    env:
+      DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+      DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+      DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+      DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
     steps:
+      - name: Vérifier les secrets de déploiement
+        id: preflight
+        shell: bash
+        run: |
+          missing=0
+          if [ -z "$DEPLOY_HOST" ]; then echo "::warning::Secret DEPLOY_HOST manquant."; missing=1; fi
+          if [ -z "$DEPLOY_USER" ]; then echo "::warning::Secret DEPLOY_USER manquant."; missing=1; fi
+          if [ -z "$DEPLOY_SSH_KEY" ]; then echo "::warning::Secret DEPLOY_SSH_KEY manquant."; missing=1; fi
+
+          if [ "$missing" -eq 1 ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Déploiement ignoré : renseigner DEPLOY_HOST, DEPLOY_USER et DEPLOY_SSH_KEY dans GitHub Actions secrets."
+            exit 0
+          fi
+
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
       - name: Déployer via SSH (git pull + docker compose)
+        if: steps.preflight.outputs.ready == 'true'
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          host: ${{ env.DEPLOY_HOST }}
+          username: ${{ env.DEPLOY_USER }}
+          key: ${{ env.DEPLOY_SSH_KEY }}
+          port: ${{ env.DEPLOY_PORT || '22' }}
           script: |
-            set -e
-            DEPLOY_PATH="${{ secrets.DEPLOY_PATH }}"
+            set -euo pipefail
+            DEPLOY_PATH="${{ env.DEPLOY_PATH }}"
             DEPLOY_PATH="${DEPLOY_PATH:-/opt/lp2m}"
             echo "Déploiement dans $DEPLOY_PATH"
+
+            if [ ! -d "$DEPLOY_PATH/.git" ]; then
+              echo "Dépôt Git absent dans $DEPLOY_PATH. Clone initial requis : git clone https://github.com/medoune20/LP2M_Bar_Mngt.git $DEPLOY_PATH"
+              exit 1
+            fi
+
             cd "$DEPLOY_PATH"
             git fetch --all --prune
             git reset --hard origin/main
             cd GestionBarRestaurant
-            docker compose up -d --build
+
+            if docker compose version >/dev/null 2>&1; then
+              docker compose up -d --build
+            else
+              docker-compose up -d --build
+            fi
+
             docker image prune -f
             echo "Déploiement terminé."
