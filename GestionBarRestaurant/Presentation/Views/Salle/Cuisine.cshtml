@@ -1,62 +1,233 @@
 @model List<Commande>
 @{
-    ViewData["Title"] = "Cuisine (KDS)";
+    ViewData["Title"] = "Cuisine KDS";
+    var filtre = (ViewBag.StatutFiltre as string) ?? "actifs";
+    var totalPreparation = (int)(ViewBag.TotalPreparation ?? 0);
+    var totalPretes = (int)(ViewBag.TotalPretes ?? 0);
+    var totalServies = (int)(ViewBag.TotalServies ?? 0);
+    var commandesActives = (int)(ViewBag.CommandesActives ?? 0);
 }
 
-<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
-    <div>
-        <h1 class="fw-bold mb-1"><i class="bi bi-fire me-2"></i>Cuisine</h1>
-        <p class="text-muted mb-0">Articles envoyés en préparation. Actualisation automatique.</p>
+@functions {
+    string Fcfa(decimal v) => string.Format("{0:N0} FCFA", v);
+    string Age(DateTime d)
+    {
+        var age = DateTime.Now - d;
+        if (age.TotalHours >= 1) return $"{(int)age.TotalHours}h {age.Minutes:00}m";
+        return $"{Math.Max(0, (int)age.TotalMinutes)}m";
+    }
+    string BadgeStatut(StatutPreparation s) => s switch
+    {
+        StatutPreparation.EnCuisine => "text-bg-warning",
+        StatutPreparation.Prete => "text-bg-success",
+        StatutPreparation.Servie => "text-bg-secondary",
+        _ => "text-bg-light"
+    };
+    string LibelleStatut(StatutPreparation s) => s switch
+    {
+        StatutPreparation.EnCuisine => "En préparation",
+        StatutPreparation.Prete => "Prêt à servir",
+        StatutPreparation.Servie => "Servi",
+        _ => "En attente"
+    };
+}
+
+@section Styles {
+<style>
+    .kds-hero {
+        border: 1px solid rgba(15,23,42,.08);
+        border-radius: 24px;
+        padding: 18px;
+        background: linear-gradient(135deg, #111827, #1f2937);
+        color: #fff;
+        box-shadow: 0 16px 36px rgba(15,23,42,.16);
+    }
+    .kds-metric {
+        min-width: 142px;
+        border: 1px solid rgba(255,255,255,.12);
+        border-radius: 18px;
+        padding: 12px 14px;
+        background: rgba(255,255,255,.08);
+    }
+    .kds-metric span { display: block; color: rgba(255,255,255,.74); font-size: .78rem; }
+    .kds-metric strong { display: block; font-size: 1.55rem; line-height: 1.1; }
+    .kds-filter .btn { border-radius: 999px; }
+    .kds-card {
+        border: 0;
+        border-radius: 24px;
+        overflow: hidden;
+        box-shadow: 0 14px 36px rgba(15,23,42,.11);
+    }
+    .kds-card.is-urgent { outline: 3px solid rgba(220,38,38,.18); }
+    .kds-card-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+        color: #fff;
+        background: linear-gradient(135deg, #0f172a, #334155);
+    }
+    .kds-table-title { font-size: 1.2rem; font-weight: 800; }
+    .kds-age { border-radius: 999px; padding: 6px 10px; background: rgba(255,255,255,.13); font-weight: 700; }
+    .kds-line {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(15,23,42,.06);
+    }
+    .kds-line:last-child { border-bottom: 0; }
+    .kds-line-title { font-size: 1.02rem; font-weight: 800; }
+    .kds-line-note { font-size: .84rem; color: #64748b; }
+    .kds-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+    .kds-actions .btn { border-radius: 12px; font-weight: 700; }
+    .kds-card-foot {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        padding: 12px 16px;
+        background: #f8fafc;
+    }
+    @@media (max-width: 768px) {
+        .kds-hero { border-radius: 18px; }
+        .kds-metric { min-width: calc(50% - 8px); }
+        .kds-line { grid-template-columns: 1fr; }
+        .kds-actions { justify-content: stretch; }
+        .kds-actions .btn { flex: 1 1 120px; }
+    }
+</style>
+}
+
+<div class="kds-hero mb-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+        <div>
+            <div class="text-uppercase small opacity-75 fw-bold">Kitchen Display System</div>
+            <h1 class="fw-bold mb-1"><i class="bi bi-fire me-2"></i>Cuisine KDS</h1>
+            <p class="mb-0 opacity-75">Suivi en temps réel des articles envoyés en cuisine, prêts et servis.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a class="btn btn-light" asp-action="Index"><i class="bi bi-shop-window me-1"></i>Plan de salle</a>
+            <button type="button" id="btnAutoRefresh" class="btn btn-outline-light" onclick="toggleAutoRefresh()"><i class="bi bi-arrow-clockwise me-1"></i>Auto ON</button>
+        </div>
     </div>
-    <a class="btn btn-outline-secondary" asp-action="Index"><i class="bi bi-arrow-left me-1"></i>Plan de salle</a>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+        <div class="kds-metric"><span>Commandes actives</span><strong>@commandesActives</strong></div>
+        <div class="kds-metric"><span>En préparation</span><strong>@totalPreparation</strong></div>
+        <div class="kds-metric"><span>Prêts à servir</span><strong>@totalPretes</strong></div>
+        <div class="kds-metric"><span>Déjà servis</span><strong>@totalServies</strong></div>
+    </div>
+</div>
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div class="btn-group kds-filter" role="group" aria-label="Filtre KDS">
+        <a asp-action="Cuisine" asp-route-statut="actifs" class="btn @(filtre == "actifs" ? "btn-primary" : "btn-outline-primary")">Actifs</a>
+        <a asp-action="Cuisine" asp-route-statut="preparation" class="btn @(filtre == "preparation" ? "btn-primary" : "btn-outline-primary")">Préparation</a>
+        <a asp-action="Cuisine" asp-route-statut="pretes" class="btn @(filtre == "pretes" ? "btn-primary" : "btn-outline-primary")">Prêts</a>
+        <a asp-action="Cuisine" asp-route-statut="toutes" class="btn @(filtre == "toutes" ? "btn-primary" : "btn-outline-primary")">Toutes</a>
+    </div>
+    <div class="text-muted small"><i class="bi bi-clock me-1"></i>Rafraîchissement toutes les 20 secondes</div>
 </div>
 
 @if (!Model.Any())
 {
-    <div class="alert alert-success"><i class="bi bi-check2-circle me-1"></i>Aucune commande en attente en cuisine.</div>
+    <div class="alert alert-success rounded-4 p-4">
+        <i class="bi bi-check2-circle me-1"></i>Aucune commande à afficher pour ce filtre.
+    </div>
 }
 
 <div class="row g-3">
     @foreach (var c in Model)
     {
-        var lignes = c.Lignes.Where(l => l.Preparation == StatutPreparation.EnCuisine || l.Preparation == StatutPreparation.Prete)
-            .OrderBy(l => l.Preparation).ToList();
+        var lignes = c.Lignes.Where(l => filtre switch
+            {
+                "preparation" => l.Preparation == StatutPreparation.EnCuisine,
+                "pretes" => l.Preparation == StatutPreparation.Prete,
+                "servies" => l.Preparation == StatutPreparation.Servie,
+                "toutes" => l.Preparation != StatutPreparation.EnAttente,
+                _ => l.Preparation == StatutPreparation.EnCuisine || l.Preparation == StatutPreparation.Prete
+            })
+            .OrderBy(l => l.Preparation)
+            .ThenBy(l => l.ProduitNom)
+            .ToList();
+
+        if (!lignes.Any()) { continue; }
+
+        var minutes = (DateTime.Now - c.DateOuverture).TotalMinutes;
+        var urgent = minutes >= 25;
+        var enPreparation = lignes.Where(l => l.Preparation == StatutPreparation.EnCuisine).ToList();
+        var pretes = lignes.Where(l => l.Preparation == StatutPreparation.Prete).ToList();
+
         <div class="col-12 col-md-6 col-xl-4">
-            <div class="card h-100">
-                <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                    <span class="fw-bold"><i class="bi bi-shop-window me-1"></i>Table @c.TableNom</span>
-                    <span class="text-muted small">@c.DateOuverture.ToString("HH:mm") · @c.Couverts couv.</span>
+            <div class="card kds-card h-100 @(urgent ? "is-urgent" : "")">
+                <div class="kds-card-head">
+                    <div>
+                        <div class="kds-table-title"><i class="bi bi-shop-window me-1"></i>Table @c.TableNom</div>
+                        <div class="small opacity-75">@c.Numero · @c.Couverts couvert(s) · @Fcfa(c.Total)</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="kds-age @(urgent ? "bg-danger text-white" : "")">@Age(c.DateOuverture)</div>
+                        <div class="small opacity-75 mt-1">Ouverte @c.DateOuverture.ToString("HH:mm")</div>
+                    </div>
                 </div>
-                <ul class="list-group list-group-flush">
+
+                <div>
                     @foreach (var l in lignes)
                     {
-                        var prete = l.Preparation == StatutPreparation.Prete;
-                        <li class="list-group-item d-flex justify-content-between align-items-center @(prete ? "bg-light" : "")">
-                            <span>
-                                <span class="badge @(prete ? "text-bg-success" : "text-bg-warning") me-1">@l.Quantite×</span>
-                                <span class="@(prete ? "text-decoration-line-through text-muted" : "fw-semibold")">@l.ProduitNom</span>
-                                @if (!string.IsNullOrWhiteSpace(l.Note)) { <div class="small text-muted">@l.Note</div> }
-                            </span>
-                            <span class="d-flex gap-1">
-                                @if (!prete)
+                        <div class="kds-line">
+                            <div>
+                                <div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+                                    <span class="badge text-bg-dark fs-6">@l.Quantite×</span>
+                                    <span class="badge @BadgeStatut(l.Preparation)">@LibelleStatut(l.Preparation)</span>
+                                </div>
+                                <div class="kds-line-title @(l.Preparation == StatutPreparation.Servie ? "text-muted text-decoration-line-through" : "")">@l.ProduitNom</div>
+                                @if (!string.IsNullOrWhiteSpace(l.Note))
+                                {
+                                    <div class="kds-line-note"><i class="bi bi-chat-left-text me-1"></i>@l.Note</div>
+                                }
+                            </div>
+                            <div class="kds-actions">
+                                @if (l.Preparation == StatutPreparation.EnCuisine)
                                 {
                                     <form asp-action="MarquerLigne" method="post" class="d-inline">
                                         @Html.AntiForgeryToken()
                                         <input type="hidden" name="ligneId" value="@l.Id" />
-                                        <input type="hidden" name="statut" value="3" />
-                                        <button class="btn btn-sm btn-success" title="Prêt"><i class="bi bi-check2"></i></button>
+                                        <input type="hidden" name="statut" value="@((int)StatutPreparation.Prete)" />
+                                        <button class="btn btn-sm btn-success"><i class="bi bi-check2-circle me-1"></i>Prêt</button>
                                     </form>
                                 }
-                                <form asp-action="MarquerLigne" method="post" class="d-inline">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="ligneId" value="@l.Id" />
-                                    <input type="hidden" name="statut" value="4" />
-                                    <button class="btn btn-sm btn-outline-secondary" title="Servi"><i class="bi bi-bag-check"></i></button>
-                                </form>
-                            </span>
-                        </li>
+                                @if (l.Preparation == StatutPreparation.Prete)
+                                {
+                                    <form asp-action="MarquerLigne" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="ligneId" value="@l.Id" />
+                                        <input type="hidden" name="statut" value="@((int)StatutPreparation.EnCuisine)" />
+                                        <button class="btn btn-sm btn-outline-warning"><i class="bi bi-arrow-counterclockwise me-1"></i>Retour</button>
+                                    </form>
+                                    <form asp-action="MarquerLigne" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="ligneId" value="@l.Id" />
+                                        <input type="hidden" name="statut" value="@((int)StatutPreparation.Servie)" />
+                                        <button class="btn btn-sm btn-outline-secondary"><i class="bi bi-bag-check me-1"></i>Servi</button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
                     }
-                </ul>
+                </div>
+
+                <div class="kds-card-foot">
+                    <form asp-action="MarquerCommandePrete" method="post" class="flex-fill">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="commandeId" value="@c.Id" />
+                        <button class="btn btn-warning w-100" @(enPreparation.Any() ? "" : "disabled")><i class="bi bi-check-all me-1"></i>Tout prêt</button>
+                    </form>
+                    <form asp-action="MarquerCommandeServie" method="post" class="flex-fill">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="commandeId" value="@c.Id" />
+                        <button class="btn btn-outline-secondary w-100" @(pretes.Any() ? "" : "disabled")><i class="bi bi-bag-check me-1"></i>Tout servi</button>
+                    </form>
+                </div>
             </div>
         </div>
     }
@@ -64,7 +235,25 @@
 
 @section Scripts {
 <script>
-    // Actualisation automatique de l'écran cuisine.
-    setTimeout(function(){ location.reload(); }, 25000);
+    let kdsAutoRefresh = true;
+    let kdsTimer = setTimeout(refreshKds, 20000);
+
+    function refreshKds(){
+        if(kdsAutoRefresh) location.reload();
+    }
+
+    function toggleAutoRefresh(){
+        kdsAutoRefresh = !kdsAutoRefresh;
+        const btn = document.getElementById('btnAutoRefresh');
+        if(btn){
+            btn.innerHTML = kdsAutoRefresh
+                ? '<i class="bi bi-arrow-clockwise me-1"></i>Auto ON'
+                : '<i class="bi bi-pause-circle me-1"></i>Auto OFF';
+            btn.classList.toggle('btn-outline-light', kdsAutoRefresh);
+            btn.classList.toggle('btn-warning', !kdsAutoRefresh);
+        }
+        clearTimeout(kdsTimer);
+        if(kdsAutoRefresh) kdsTimer = setTimeout(refreshKds, 20000);
+    }
 </script>
 }
