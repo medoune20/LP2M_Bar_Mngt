@@ -158,6 +158,38 @@ public class ComptabiliteService
         return rapport;
     }
 
+    public List<GrandLivreCompteVm> GrandLivre(int tenantId, DateTime du, DateTime au)
+    {
+        var rapport = GenererRapport(tenantId, du, au);
+        return rapport.Ecritures
+            .SelectMany(e => e.Lignes.Select(l => new { e.Date, e.Journal, e.Piece, e.Libelle, l.Compte, l.Debit, l.Credit }))
+            .GroupBy(x => x.Compte)
+            .Select(g =>
+            {
+                var vm = new GrandLivreCompteVm { Compte = g.Key, Intitule = ComptabiliteOhada.Intitule(g.Key) };
+                decimal solde = 0;
+                foreach (var m in g.OrderBy(x => x.Date))
+                {
+                    solde += m.Debit - m.Credit;
+                    vm.Mouvements.Add(new GrandLivreLigneVm
+                    {
+                        Date = m.Date,
+                        Journal = m.Journal,
+                        Piece = m.Piece,
+                        Libelle = m.Libelle,
+                        Debit = m.Debit,
+                        Credit = m.Credit,
+                        SoldeCumule = solde
+                    });
+                    vm.TotalDebit += m.Debit;
+                    vm.TotalCredit += m.Credit;
+                }
+                return vm;
+            })
+            .OrderBy(x => x.Compte)
+            .ToList();
+    }
+
     public CompteResultatVm CompteResultat(int tenantId, DateTime du, DateTime au)
     {
         var rapport = GenererRapport(tenantId, du, au);

@@ -40,6 +40,28 @@ public class RapprochementLigneVm
     public decimal Total { get; set; }
 }
 
+public class GrandLivreLigneVm
+{
+    public DateTime Date { get; set; }
+    public string Journal { get; set; } = string.Empty;
+    public string Piece { get; set; } = string.Empty;
+    public string Libelle { get; set; } = string.Empty;
+    public decimal Debit { get; set; }
+    public decimal Credit { get; set; }
+    public decimal SoldeCumule { get; set; }
+}
+
+/// <summary>Grand-livre d'un compte : mouvements de la période + solde cumulé.</summary>
+public class GrandLivreCompteVm
+{
+    public string Compte { get; set; } = string.Empty;
+    public string Intitule { get; set; } = string.Empty;
+    public List<GrandLivreLigneVm> Mouvements { get; set; } = new();
+    public decimal TotalDebit { get; set; }
+    public decimal TotalCredit { get; set; }
+    public decimal Solde => TotalDebit - TotalCredit;
+}
+
 public class CompteResultatLigneVm
 {
     public string Compte { get; set; } = string.Empty;

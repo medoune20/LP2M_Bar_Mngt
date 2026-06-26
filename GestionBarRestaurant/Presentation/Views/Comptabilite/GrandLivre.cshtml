@@ -1,0 +1,54 @@
+@model List<GrandLivreCompteVm>
+@{
+    ViewData["Title"] = "Grand-livre";
+    Func<decimal, string> fcfa = v => v == 0 ? "" : string.Format("{0:N0}", v);
+    var du = ViewBag.Du as string;
+    var au = ViewBag.Au as string;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="fw-bold mb-1">Grand-livre</h1>
+        <p class="text-muted mb-0">SYSCOHADA — mouvements par compte, du @(DateTime.TryParse(du, out var dd) ? dd.ToString("dd/MM/yyyy") : du) au @(DateTime.TryParse(au, out var aa) ? aa.ToString("dd/MM/yyyy") : au)</p>
+    </div>
+    <a class="btn btn-outline-secondary" asp-action="Index" asp-route-du="@du" asp-route-au="@au"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">Aucun mouvement sur la période.</div>
+}
+
+@foreach (var compte in Model)
+{
+    <div class="card mb-3">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <span class="fw-bold">@compte.Compte — @compte.Intitule</span>
+            <span class="small">Solde : <strong class="@(compte.Solde >= 0 ? "text-primary" : "text-danger")">@string.Format("{0:N0}", compte.Solde)</strong></span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr><th>Date</th><th>Jrnl</th><th>Pièce</th><th>Libellé</th><th class="text-end">Débit</th><th class="text-end">Crédit</th><th class="text-end">Solde</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in compte.Mouvements)
+                    {
+                        <tr>
+                            <td>@m.Date.ToString("dd/MM/yyyy")</td>
+                            <td>@m.Journal</td>
+                            <td>@m.Piece</td>
+                            <td>@m.Libelle</td>
+                            <td class="text-end">@fcfa(m.Debit)</td>
+                            <td class="text-end">@fcfa(m.Credit)</td>
+                            <td class="text-end">@string.Format("{0:N0}", m.SoldeCumule)</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold border-top"><td colspan="4">Totaux</td><td class="text-end">@string.Format("{0:N0}", compte.TotalDebit)</td><td class="text-end">@string.Format("{0:N0}", compte.TotalCredit)</td><td></td></tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+}
