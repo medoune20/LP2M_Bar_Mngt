@@ -81,8 +81,21 @@ public class VenteController : BaseController
     }
 
     [HttpPost]
-    public IActionResult Rapide(int[] produitIds, int[] quantites, int clientId, string modePaiement, string? referencePaiement, decimal remise, int pointsFideliteUtilises, decimal montantRecu, int caisseSessionId)
+    public IActionResult Rapide(int[] produitIds, int[] quantites, int clientId, string modePaiement, string? referencePaiement, decimal remise, int pointsFideliteUtilises, decimal montantRecu, int caisseSessionId, string? clientUuid)
     {
+        // Idempotence : si une vente avec ce GUID existe déjà (double-clic ou
+        // resynchronisation d'une vente hors-ligne), on ne la recrée pas.
+        clientUuid = (clientUuid ?? string.Empty).Trim();
+        if (clientUuid.Length > 0)
+        {
+            var existante = _db.Ventes.FirstOrDefault(v => v.TenantId == TenantId && v.ClientUuid == clientUuid);
+            if (existante != null)
+            {
+                TempData["Succes"] = $"Vente déjà enregistrée. Ticket : {existante.NumeroTicket}.";
+                return RedirectToAction(nameof(Details), new { id = existante.Id });
+            }
+        }
+
         if (produitIds.Length == 0 || quantites.Length == 0)
         {
             TempData["Erreur"] = "Le panier est vide.";
@@ -218,6 +231,7 @@ public class VenteController : BaseController
                 VendeurId = UtilisateurId,
                 CaisseSessionId = caisse.Id,
                 Statut = StatutVente.Validee,
+                ClientUuid = clientUuid,
                 Lignes = lignes
             };
 

@@ -160,6 +160,12 @@
                     <div id="panierVide" class="gbpos32-cart-empty"><i class="bi bi-cart3"></i><strong>Ticket vide</strong><span>Touchez un produit pour l’ajouter.</span></div>
                     <div id="lignesPanier"></div>
                     <div id="hiddenInputs"></div>
+                    <input type="hidden" name="clientUuid" id="clientUuid" />
+                </div>
+
+                <div id="zoneHorsLigne" class="gbpos32-offline d-none">
+                    <span><i class="bi bi-cloud-arrow-up me-1"></i><strong id="nbHorsLigne">0</strong> vente(s) hors-ligne à synchroniser</span>
+                    <button type="button" class="btn btn-sm btn-light" onclick="synchroniserHorsLigne()">Synchroniser</button>
                 </div>
 
                 @if (caissesDispo.Count > 1)
@@ -480,12 +486,31 @@ function validerPanier(event){
             return false;
         }
     }
+    document.getElementById('clientUuid').value = nouvelUuid();
+
+    // Hors-ligne : on enregistre la vente localement (IndexedDB) et on continue.
+    if (window.posOffline && navigator.onLine === false) {
+        const form = document.getElementById('formVenteRapide');
+        window.posOffline.mettreEnFile(form).then(function () {
+            panier = {};
+            afficherPanier();
+            document.getElementById('montantRecu').value = '0';
+            document.getElementById('remise').value = '0';
+            document.getElementById('pointsFideliteUtilises').value = '0';
+            alert('Hors-ligne : vente enregistrée localement. Elle sera synchronisée automatiquement au retour du réseau.');
+        });
+        return false;
+    }
+
     validationEnCours = true;
     const btn = document.getElementById('btnValiderPaiement');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Validation...';
     return true;
 }
+
+function nouvelUuid(){ return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + '-' + Math.random().toString(16).slice(2)); }
+function synchroniserHorsLigne(){ if(window.posOffline){ window.posOffline.synchroniser().then(function(r){ if(r && r.envoyees > 0) location.reload(); }); } }
 
 function cartesFiltrees(){
     const q = normaliser(document.getElementById('searchProduit')?.value || '');
@@ -542,6 +567,13 @@ function majHorloge(){
 
 document.addEventListener('DOMContentLoaded', function(){
     majInfosClient(); afficherPanier(); filtrerProduits(true); majModePaiement(); majHorloge(); setInterval(majHorloge, 30000);
+    if(window.posOffline){
+        window.posOffline.surChangement(function(n){
+            var z = document.getElementById('zoneHorsLigne');
+            document.getElementById('nbHorsLigne').innerText = n;
+            if(z) z.classList.toggle('d-none', !n);
+        });
+    }
     document.getElementById('codeManuel').addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); chercherCodeManuel(); } });
     window.addEventListener('resize', function(){ filtrerProduits(false); });
 });

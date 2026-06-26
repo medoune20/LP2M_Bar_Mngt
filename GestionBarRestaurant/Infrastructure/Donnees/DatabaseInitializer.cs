@@ -318,6 +318,8 @@ CREATE TABLE IF NOT EXISTS ""MouvementsFidelite"" (
         AjouterColonneSiAbsente(db, "Ventes", "AnnuleePar", "TEXT NOT NULL DEFAULT ''");
         AjouterColonneSiAbsente(db, "Ventes", "VendeurId", "INTEGER NOT NULL DEFAULT 0");
         AjouterColonneSiAbsente(db, "Ventes", "ReferencePaiement", "TEXT NOT NULL DEFAULT ''");
+        AjouterColonneSiAbsente(db, "Ventes", "ClientUuid", "TEXT NOT NULL DEFAULT ''");
+        db.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_Ventes_TenantId_ClientUuid"" ON ""Ventes"" (""TenantId"", ""ClientUuid"");");
         db.Database.ExecuteSqlRaw(@"CREATE INDEX IF NOT EXISTS ""IX_Ventes_TenantId_CaisseSessionId"" ON ""Ventes"" (""TenantId"", ""CaisseSessionId"");");
 
         AjouterColonneSiAbsente(db, "LignesVente", "PrixAchatUnitaire", "REAL NOT NULL DEFAULT 0");
