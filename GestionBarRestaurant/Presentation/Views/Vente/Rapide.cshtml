@@ -202,8 +202,14 @@
                 <div class="gbpos32-payments">
                     <input type="radio" class="btn-check" name="modePaiement" id="payCash" value="Espèces" checked onchange="majModePaiement()" />
                     <label for="payCash"><i class="bi bi-cash-stack"></i><span>Espèces</span></label>
-                    <input type="radio" class="btn-check" name="modePaiement" id="payMobile" value="Mobile Money" onchange="majModePaiement()" />
-                    <label for="payMobile"><i class="bi bi-phone"></i><span>Mobile Money</span></label>
+                    <input type="radio" class="btn-check" name="modePaiement" id="payWave" value="Wave" onchange="majModePaiement()" />
+                    <label for="payWave"><i class="bi bi-phone"></i><span>Wave</span></label>
+                    <input type="radio" class="btn-check" name="modePaiement" id="payOM" value="Orange Money" onchange="majModePaiement()" />
+                    <label for="payOM"><i class="bi bi-phone"></i><span>Orange Money</span></label>
+                    <input type="radio" class="btn-check" name="modePaiement" id="payMTN" value="MTN MoMo" onchange="majModePaiement()" />
+                    <label for="payMTN"><i class="bi bi-phone"></i><span>MTN MoMo</span></label>
+                    <input type="radio" class="btn-check" name="modePaiement" id="payMoov" value="Moov Money" onchange="majModePaiement()" />
+                    <label for="payMoov"><i class="bi bi-phone"></i><span>Moov Money</span></label>
                     <input type="radio" class="btn-check" name="modePaiement" id="payCard" value="Carte bancaire" onchange="majModePaiement()" />
                     <label for="payCard"><i class="bi bi-credit-card"></i><span>Carte</span></label>
                     <input type="radio" class="btn-check" name="modePaiement" id="payCredit" value="Crédit" onchange="majModePaiement()" />
@@ -390,7 +396,7 @@ function majModePaiement(){
     const mode = modePaiement();
     const refZone = document.getElementById('referencePaiementZone');
     const refInput = document.getElementById('referencePaiement');
-    const exigeReference = mode === 'Mobile Money' || mode === 'Carte bancaire';
+    const exigeReference = mode !== 'Espèces' && mode !== 'Crédit';
     refZone.classList.toggle('d-none', !exigeReference);
     refInput.required = exigeReference;
     if(!exigeReference) refInput.value = '';
@@ -461,7 +467,7 @@ function validerPanier(event){
     const paiement = modePaiement();
     const montantRecu = montantDepuisTexte(document.getElementById('montantRecu').value || '0');
     if(paiement === 'Espèces' && montantRecu < dernierTotalNet){ alert('Le montant encaissé est inférieur au total à payer.'); return false; }
-    if((paiement === 'Mobile Money' || paiement === 'Carte bancaire') && !document.getElementById('referencePaiement').value.trim()){
+    if(paiement !== 'Espèces' && paiement !== 'Crédit' && !document.getElementById('referencePaiement').value.trim()){
         alert('Saisissez la référence de transaction avant de valider.');
         document.getElementById('referencePaiement').focus();
         return false;

@@ -426,6 +426,7 @@ CREATE TABLE IF NOT EXISTS ""ParametragesComptables"" (
     ""CompteApports"" TEXT NOT NULL DEFAULT '4711'
 );");
         db.Database.ExecuteSqlRaw(@"CREATE UNIQUE INDEX IF NOT EXISTS ""IX_ParametragesComptables_TenantId"" ON ""ParametragesComptables"" (""TenantId"");");
+        AjouterColonneSiAbsente(db, "ParametragesComptables", "CompteMobileMoney", "TEXT NOT NULL DEFAULT '521'");
 
         db.Database.ExecuteSqlRaw(@"
 CREATE TABLE IF NOT EXISTS ""ClesApi"" (

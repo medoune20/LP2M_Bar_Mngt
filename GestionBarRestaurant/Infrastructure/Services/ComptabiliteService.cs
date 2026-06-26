@@ -38,6 +38,7 @@ public class ComptabiliteService
         p.Exercice = maj.Exercice <= 0 ? DateTime.Now.Year : maj.Exercice;
         p.CompteCaisse = Def(maj.CompteCaisse, "571");
         p.CompteBanque = Def(maj.CompteBanque, "521");
+        p.CompteMobileMoney = Def(maj.CompteMobileMoney, "521");
         p.CompteClients = Def(maj.CompteClients, "411");
         p.CompteFournisseurs = Def(maj.CompteFournisseurs, "401");
         p.CompteVentes = Def(maj.CompteVentes, "701");
@@ -181,12 +182,37 @@ public class ComptabiliteService
     }
 
     private static string CompteTresorerie(string? modePaiement, ParametrageComptable p)
+        => MoyensPaiement.Categoriser(modePaiement) switch
+        {
+            CategoriePaiement.Especes => p.CompteCaisse,
+            CategoriePaiement.Mobile => p.CompteMobileMoney,
+            CategoriePaiement.Carte => p.CompteBanque,
+            CategoriePaiement.Credit => p.CompteClients,
+            _ => p.CompteCaisse
+        };
+
+    /// <summary>Rapprochement des ventes par moyen de paiement sur une période.</summary>
+    public List<RapprochementLigneVm> Rapprochement(int tenantId, DateTime du, DateTime au)
     {
-        var m = (modePaiement ?? string.Empty).ToLowerInvariant();
-        if (m.Length == 0) return p.CompteCaisse;
-        if (m.Contains("crédit") || m.Contains("credit") || m.Contains("avoir")) return p.CompteClients;
-        if (m.Contains("esp") || m.Contains("cash") || m.Contains("comptant")) return p.CompteCaisse;
-        return p.CompteBanque; // carte, mobile money, wave, virement…
+        var debut = du.Date;
+        var finExclusive = au.Date.AddDays(1);
+        var ventes = _db.Ventes
+            .Where(v => v.TenantId == tenantId && v.Statut == StatutVente.Validee
+                        && v.DateVente >= debut && v.DateVente < finExclusive)
+            .Select(v => new { v.ModePaiement, v.TotalBrut, v.Remise, v.RemiseFidelite })
+            .ToList();
+
+        return ventes
+            .GroupBy(v => string.IsNullOrWhiteSpace(v.ModePaiement) ? "Espèces" : v.ModePaiement)
+            .Select(g => new RapprochementLigneVm
+            {
+                Mode = g.Key,
+                Categorie = MoyensPaiement.LibelleCategorie(MoyensPaiement.Categoriser(g.Key)),
+                Nombre = g.Count(),
+                Total = g.Sum(v => Math.Max(0, v.TotalBrut - v.Remise - v.RemiseFidelite))
+            })
+            .OrderByDescending(x => x.Total)
+            .ToList();
     }
 
     private static string Def(string? valeur, string defaut)
