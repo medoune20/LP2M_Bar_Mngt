@@ -1,0 +1,36 @@
+@model List<LitHospitalisation>
+@{
+    ViewData["Title"] = "Gestion des lits";
+    var dept = ViewBag.Departement as Departement;
+    var hospsActives = ViewBag.HospitalisationsActives as List<Hospitalisation> ?? new();
+}
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <div>
+            <h1 class="gh-page-title"><i class="bi bi-grid me-2"></i>Lits — @dept?.Nom</h1>
+            <p class="gh-page-subtitle">@Model.Count(l => l.Statut == StatutLit.Libre) libres / @Model.Count total</p>
+        </div>
+        <a href="/Departement" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
+<div class="gh-content">
+    <div class="gh-lits-grid">
+        @foreach (var lit in Model)
+        {
+            var hosp = hospsActives.FirstOrDefault(h => h.LitId == lit.Id);
+            <div class="gh-lit-card gh-lit-@lit.Statut.ToString().ToLower()">
+                <div class="gh-lit-num"><i class="bi bi-@(lit.Statut == StatutLit.Libre ? "check" : lit.Statut == StatutLit.Occupé ? "person-fill" : "wrench") me-1"></i>@lit.Numéro</div>
+                <div class="gh-lit-statut">
+                    <span class="badge bg-@lit.StatutCssClass">@lit.Statut</span>
+                </div>
+                @if (hosp != null)
+                {
+                    <div class="gh-lit-patient">
+                        <div class="fw-semibold small">@hosp.Patient?.NomComplet</div>
+                        <div class="text-muted x-small">J+@hosp.DuréeJours depuis @hosp.DateAdmission.ToString("dd/MM")</div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

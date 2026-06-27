@@ -1,0 +1,103 @@
+@model List<Patient>
+@{
+    ViewData["Title"] = "Patients";
+}
+
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <div>
+            <h1 class="gh-page-title"><i class="bi bi-people me-2"></i>Patients</h1>
+            <p class="gh-page-subtitle">@ViewBag.TotalPatients patients enregistrés</p>
+        </div>
+        <a href="/Patient/Nouveau" class="btn btn-primary"><i class="bi bi-person-plus me-1"></i>Nouveau patient</a>
+    </div>
+</div>
+
+<div class="gh-content">
+    <div class="gh-card mb-4">
+        <div class="gh-card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Recherche</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="recherche" class="form-control" placeholder="Nom, prénom, N° dossier, téléphone..." value="@ViewBag.Recherche" />
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-semibold">Statut</label>
+                    <select name="statut" class="form-select">
+                        <option value="">Tous les statuts</option>
+                        @foreach (StatutPatient s in Enum.GetValues(typeof(StatutPatient)))
+                        {
+                            <option value="@s" selected="@(ViewBag.StatutFiltre?.ToString() == s.ToString())">@s</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-search me-1"></i>Rechercher</button>
+                    <a href="/Patient" class="btn btn-outline-secondary"><i class="bi bi-x"></i></a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="gh-card">
+        <div class="gh-card-body p-0">
+            @if (!Model.Any())
+            {
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-person-x fs-1 d-block mb-2"></i>
+                    <p>Aucun patient trouvé.</p>
+                    <a href="/Patient/Nouveau" class="btn btn-primary">Enregistrer un patient</a>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="gh-table table">
+                        <thead>
+                            <tr>
+                                <th>N° Dossier</th>
+                                <th>Patient</th>
+                                <th>Âge / Sexe</th>
+                                <th>Groupe</th>
+                                <th>Téléphone</th>
+                                <th>Statut</th>
+                                <th>Enregistré le</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model)
+                            {
+                                <tr>
+                                    <td><span class="gh-dossier-badge">@p.NuméroDossier</span></td>
+                                    <td>
+                                        <div class="gh-patient-name">@p.NomComplet</div>
+                                        @if (!string.IsNullOrEmpty(p.Allergies))
+                                        {
+                                            <small class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>Allergies</small>
+                                        }
+                                    </td>
+                                    <td>@p.Âge ans / @p.Sexe</td>
+                                    <td><span class="badge bg-danger-subtle text-danger-emphasis fw-bold">@p.GroupeSanguinLibellé</span></td>
+                                    <td>@(p.Téléphone ?? "—")</td>
+                                    <td><span class="badge bg-@p.StatutCssClass">@p.Statut</span></td>
+                                    <td>@p.DateEnregistrement.ToString("dd/MM/yyyy")</td>
+                                    <td class="text-end">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/Patient/Details/@p.Id" class="btn btn-outline-primary" title="Dossier"><i class="bi bi-folder2-open"></i></a>
+                                            <a href="/RendezVous/Nouveau?patientId=@p.Id" class="btn btn-outline-success" title="RDV"><i class="bi bi-calendar-plus"></i></a>
+                                            <a href="/Patient/Modifier/@p.Id" class="btn btn-outline-secondary" title="Modifier"><i class="bi bi-pencil"></i></a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

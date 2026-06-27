@@ -1,0 +1,491 @@
+/* ============================================================
+   GestionHopital — Feuille de style principale
+   Même architecture que LP2M_Bar_Mngt mais palette médicale
+   ============================================================ */
+
+:root {
+  --gh-primary: #0ea5e9;
+  --gh-primary-dark: #0284c7;
+  --gh-bg: #f0f9ff;
+  --gh-card: #ffffff;
+  --gh-text: #1e293b;
+  --gh-muted: #64748b;
+  --gh-sidebar-bg: #0c1a2e;
+  --gh-sidebar-w: 260px;
+  --gh-topbar-h: 56px;
+  --gh-radius: 16px;
+  --gh-shadow: 0 4px 24px rgba(14,165,233,.09);
+  --gh-shadow-md: 0 8px 32px rgba(14,165,233,.14);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: var(--gh-bg);
+  color: var(--gh-text);
+  font-size: 0.92rem;
+}
+
+/* ─── SIDEBAR ─────────────────────────────────────────────── */
+.gh-sidebar {
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  width: var(--gh-sidebar-w);
+  background: var(--gh-sidebar-bg);
+  z-index: 100;
+  overflow: hidden;
+  box-shadow: 4px 0 20px rgba(0,0,0,.18);
+}
+.gh-sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 18px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.gh-brand-icon {
+  width: 40px; height: 40px;
+  background: var(--gh-primary);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.3rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+.gh-brand-name { font-weight: 700; color: #fff; font-size: 1.05rem; display: block; }
+.gh-brand-sub  { color: rgba(255,255,255,.45); font-size: .72rem; display: block; }
+
+.gh-nav { padding: 8px 10px; }
+.gh-nav-label {
+  color: rgba(255,255,255,.35);
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 14px 8px 4px;
+}
+.gh-nav-section { margin-bottom: 4px; }
+.gh-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: rgba(255,255,255,.65);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all .15s ease;
+  margin-bottom: 2px;
+  font-size: .88rem;
+}
+.gh-link i { font-size: 1.05rem; flex-shrink: 0; }
+.gh-link:hover, .gh-link.active {
+  background: rgba(14,165,233,.18);
+  color: #fff;
+}
+.gh-link.active { background: rgba(14,165,233,.28); color: var(--gh-primary); }
+
+.gh-sidebar-footer { padding: 12px 10px; border-top: 1px solid rgba(255,255,255,.08); }
+.gh-user-pill {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(255,255,255,.06);
+}
+.gh-user-avatar { font-size: 1.8rem; color: var(--gh-primary); flex-shrink: 0; }
+.gh-user-info { flex: 1; min-width: 0; }
+.gh-user-name { display: block; color: #fff; font-weight: 600; font-size: .84rem; truncate; }
+.gh-user-role { display: block; color: rgba(255,255,255,.4); font-size: .72rem; }
+.gh-logout-btn { color: rgba(255,255,255,.5); font-size: 1.1rem; text-decoration: none; }
+.gh-logout-btn:hover { color: #ef4444; }
+
+/* ─── TOPBAR MOBILE ───────────────────────────────────────── */
+.gh-topbar {
+  height: var(--gh-topbar-h);
+  background: linear-gradient(135deg, #0c1a2e 0%, var(--gh-primary-dark) 100%);
+  padding: 0 16px;
+  position: sticky; top: 0; z-index: 50;
+}
+.gh-mobile-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200;
+  display: none !important;
+}
+.gh-mobile-overlay.show { display: block !important; }
+.gh-mobile-drawer {
+  position: fixed; top: 0; left: -100%; bottom: 0;
+  width: 280px; background: var(--gh-sidebar-bg);
+  z-index: 201; transition: left .3s ease; overflow-y: auto;
+}
+.gh-mobile-drawer.show { left: 0; }
+.gh-mobile-drawer .gh-link { color: rgba(255,255,255,.7); }
+.gh-mobile-drawer .gh-link:hover { color: #fff; background: rgba(14,165,233,.2); }
+
+/* ─── MAIN ────────────────────────────────────────────────── */
+@media (min-width: 992px) {
+  .gh-main { margin-left: var(--gh-sidebar-w); min-height: 100vh; }
+}
+
+/* ─── PAGE HEADER ─────────────────────────────────────────── */
+.gh-page-header {
+  background: linear-gradient(135deg, #0c1a2e 0%, #0e3a5e 60%, #0284c7 100%);
+  padding: 28px 28px 24px;
+  color: #fff;
+  position: relative; overflow: hidden;
+}
+.gh-page-header::after {
+  content: '';
+  position: absolute; right: -40px; top: -40px;
+  width: 240px; height: 240px;
+  background: radial-gradient(circle, rgba(14,165,233,.25) 0%, transparent 70%);
+  border-radius: 50%;
+}
+.gh-page-header-inner {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  position: relative; z-index: 1;
+}
+.gh-page-title { font-size: 1.5rem; font-weight: 700; margin: 0; color: #fff; }
+.gh-page-subtitle { color: rgba(255,255,255,.65); margin: 4px 0 0; font-size: .88rem; }
+
+/* ─── CONTENT AREA ────────────────────────────────────────── */
+.gh-content { padding: 24px 28px; }
+@media (max-width: 767px) { .gh-content { padding: 16px; } }
+
+/* ─── CARDS ───────────────────────────────────────────────── */
+.gh-card {
+  background: var(--gh-card);
+  border-radius: var(--gh-radius);
+  box-shadow: var(--gh-shadow);
+  border: 1px solid rgba(14,165,233,.07);
+  overflow: hidden;
+}
+.gh-card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(14,165,233,.08);
+  background: rgba(240,249,255,.6);
+}
+.gh-card-title { font-weight: 600; font-size: .95rem; margin: 0; }
+.gh-card-body { padding: 20px; }
+
+/* ─── METRIC CARDS ────────────────────────────────────────── */
+.gh-metric-card {
+  border-radius: var(--gh-radius);
+  padding: 20px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  display: block;
+  text-decoration: none;
+  box-shadow: var(--gh-shadow-md);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.gh-metric-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,.18); }
+.gh-metric-icon {
+  font-size: 2rem;
+  opacity: .85;
+  margin-bottom: 8px;
+  display: block;
+}
+.gh-metric-value { font-size: 2.2rem; font-weight: 800; line-height: 1; }
+.gh-metric-label { font-size: .82rem; opacity: .85; margin-top: 4px; }
+.gh-metric-card::after {
+  content: '';
+  position: absolute; right: -20px; bottom: -20px;
+  width: 100px; height: 100px;
+  background: rgba(255,255,255,.12);
+  border-radius: 50%;
+}
+.gh-metric-blue   { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+.gh-metric-green  { background: linear-gradient(135deg, #10b981, #059669); }
+.gh-metric-orange { background: linear-gradient(135deg, #f97316, #ea580c); }
+.gh-metric-teal   { background: linear-gradient(135deg, #14b8a6, #0d9488); }
+.gh-metric-purple { background: linear-gradient(135deg, #a855f7, #9333ea); }
+.gh-metric-indigo { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+.gh-metric-red    { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.gh-metric-cyan   { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+
+/* ─── TABLES ──────────────────────────────────────────────── */
+.gh-table { margin: 0; }
+.gh-table thead th {
+  background: rgba(240,249,255,.8);
+  font-weight: 600;
+  font-size: .82rem;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--gh-muted);
+  padding: 12px 16px;
+  border-bottom: 2px solid rgba(14,165,233,.12);
+}
+.gh-table tbody td {
+  padding: 12px 16px;
+  vertical-align: middle;
+  border-bottom: 1px solid rgba(14,165,233,.06);
+}
+.gh-table tbody tr:last-child td { border-bottom: none; }
+.gh-table tbody tr:hover { background: rgba(14,165,233,.04); }
+
+/* ─── DOSSIER BADGE ───────────────────────────────────────── */
+.gh-dossier-badge {
+  font-family: 'Consolas', monospace;
+  font-size: .8rem;
+  font-weight: 700;
+  background: rgba(14,165,233,.1);
+  color: var(--gh-primary-dark);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(14,165,233,.2);
+  display: inline-block;
+}
+.gh-patient-name { font-weight: 600; }
+
+/* ─── TIMELINE ────────────────────────────────────────────── */
+.gh-timeline-item { position: relative; padding-left: 20px; }
+.gh-timeline-dot {
+  position: absolute; left: 0; top: 22px;
+  width: 10px; height: 10px;
+  background: var(--gh-primary);
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 2px var(--gh-primary);
+}
+.gh-timeline-urgence { background: #ef4444; box-shadow: 0 0 0 2px #ef4444; }
+
+/* ─── DASHBOARD LIST ──────────────────────────────────────── */
+.gh-list { }
+.gh-list-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid rgba(14,165,233,.06);
+}
+.gh-list-item:last-child { border-bottom: none; }
+.gh-list-time {
+  font-weight: 700;
+  color: var(--gh-primary);
+  font-size: .92rem;
+  min-width: 48px;
+}
+.gh-list-icon { font-size: 1.3rem; }
+.gh-list-content { flex: 1; min-width: 0; }
+.gh-list-title { font-weight: 600; font-size: .9rem; }
+.gh-list-sub { font-size: .8rem; color: var(--gh-muted); }
+
+/* ─── DEPT CAPACITY ───────────────────────────────────────── */
+.gh-dept-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 20px;
+  border-bottom: 1px solid rgba(14,165,233,.06);
+}
+.gh-dept-info { flex: 1; min-width: 0; }
+.gh-dept-name { display: block; font-weight: 600; font-size: .86rem; }
+.gh-dept-meta { display: block; font-size: .75rem; color: var(--gh-muted); }
+.gh-dept-progress { flex: 0 0 80px; height: 6px; border-radius: 99px; }
+
+/* ─── VITAL SIGNS ─────────────────────────────────────────── */
+.gh-vital-card {
+  background: rgba(240,249,255,.8);
+  border: 1px solid rgba(14,165,233,.12);
+  border-radius: 10px;
+  padding: 10px 8px;
+}
+.gh-vital-val { font-size: 1.3rem; font-weight: 700; color: var(--gh-text); }
+.gh-vital-lbl { font-size: .72rem; color: var(--gh-muted); }
+
+/* ─── PATIENT DETAILS ─────────────────────────────────────── */
+.gh-patient-avatar {
+  font-size: 4.5rem;
+  color: rgba(14,165,233,.5);
+  display: block;
+}
+.gh-blood-badge {
+  display: inline-block;
+  background: #fff1f2;
+  border: 1px solid #fecdd3;
+  border-radius: 8px;
+  padding: 4px 12px;
+  font-size: 1.1rem;
+  color: #b91c1c;
+}
+.gh-patient-selected {
+  background: rgba(14,165,233,.05);
+  border: 1px solid rgba(14,165,233,.2) !important;
+  border-radius: 12px;
+}
+
+/* ─── DL STYLES ───────────────────────────────────────────── */
+.gh-dl { margin: 0; }
+.gh-dl dt { color: var(--gh-muted); font-size: .78rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-top: 12px; }
+.gh-dl dd { margin: 2px 0 0 0; font-size: .9rem; }
+.gh-dl-sm { margin: 0; font-size: .85rem; }
+.gh-dl-sm dt { color: var(--gh-muted); font-size: .75rem; }
+.gh-dl-sm dd { margin: 0 0 6px; }
+
+/* ─── TABS ────────────────────────────────────────────────── */
+.gh-tabs { border-bottom: 2px solid rgba(14,165,233,.12); }
+.gh-tabs .nav-link {
+  color: var(--gh-muted);
+  font-weight: 600;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 0;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+}
+.gh-tabs .nav-link.active {
+  color: var(--gh-primary);
+  background: none;
+  border-bottom-color: var(--gh-primary);
+}
+.gh-tabs .nav-link:hover { color: var(--gh-primary-dark); background: rgba(14,165,233,.05); }
+
+/* ─── HOSPITALISATION CARDS ───────────────────────────────── */
+.gh-hosp-card { position: relative; overflow: hidden; }
+.gh-hosp-num {
+  position: absolute; bottom: 8px; right: 12px;
+  font-size: .7rem; color: rgba(14,165,233,.3);
+  font-family: monospace; font-weight: 700;
+}
+
+/* ─── MÉDECIN CARDS ───────────────────────────────────────── */
+.gh-medecin-avatar {
+  width: 48px; height: 48px;
+  background: rgba(14,165,233,.12);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  color: var(--gh-primary);
+  flex-shrink: 0;
+}
+
+/* ─── CALENDRIER ──────────────────────────────────────────── */
+.gh-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+.gh-calendar-day {
+  background: var(--gh-card);
+  border-radius: 12px;
+  border: 1px solid rgba(14,165,233,.1);
+  overflow: hidden;
+  box-shadow: var(--gh-shadow);
+  display: flex; flex-direction: column;
+}
+.gh-calendar-today {
+  border: 2px solid var(--gh-primary);
+  box-shadow: 0 0 0 3px rgba(14,165,233,.18);
+}
+.gh-calendar-day-header {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(14,165,233,.08);
+  background: rgba(240,249,255,.6);
+}
+.gh-calendar-day-num {
+  font-weight: 800; font-size: 1.1rem;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+}
+.gh-calendar-day-name { color: var(--gh-muted); font-size: .75rem; text-transform: uppercase; }
+.gh-calendar-day-body { padding: 8px; flex: 1; }
+.gh-calendar-day-footer { padding: 6px 8px; border-top: 1px solid rgba(14,165,233,.06); }
+
+.gh-cal-rdv {
+  padding: 4px 8px;
+  border-radius: 6px;
+  border-left: 3px solid;
+  font-size: .74rem;
+}
+.gh-cal-rdv-info    { background: #eff6ff; border-color: #60a5fa; }
+.gh-cal-rdv-primary { background: #dbeafe; border-color: #3b82f6; }
+.gh-cal-rdv-warning { background: #fffbeb; border-color: #f59e0b; }
+.gh-cal-rdv-success { background: #d1fae5; border-color: #10b981; }
+.gh-cal-rdv-danger  { background: #fee2e2; border-color: #ef4444; }
+.gh-cal-rdv-time { font-weight: 700; color: #1e293b; }
+.gh-cal-rdv-name { color: #475569; }
+
+/* ─── GESTION DES LITS ────────────────────────────────────── */
+.gh-lits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+.gh-lit-card {
+  border-radius: 12px;
+  padding: 14px 12px;
+  text-align: center;
+  border: 2px solid;
+  position: relative;
+}
+.gh-lit-libre    { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+.gh-lit-occupé   { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+.gh-lit-maintenance { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+.gh-lit-réservé  { background: #eff6ff; border-color: #bfdbfe; color: #1d4ed8; }
+.gh-lit-num { font-weight: 800; font-size: 1rem; }
+.gh-lit-statut { margin: 4px 0; }
+.gh-lit-patient { font-size: .72rem; margin-top: 6px; }
+
+/* ─── ALERTS ──────────────────────────────────────────────── */
+.gh-alert { border-radius: 12px; }
+
+/* ─── BUTTONS ─────────────────────────────────────────────── */
+.btn { border-radius: 10px; font-weight: 500; }
+.btn-primary { background: var(--gh-primary); border-color: var(--gh-primary); }
+.btn-primary:hover { background: var(--gh-primary-dark); border-color: var(--gh-primary-dark); }
+
+/* ─── FORM CONTROLS ───────────────────────────────────────── */
+.form-control, .form-select {
+  border-radius: 10px;
+  border-color: rgba(14,165,233,.25);
+  font-size: .9rem;
+}
+.form-control:focus, .form-select:focus {
+  border-color: var(--gh-primary);
+  box-shadow: 0 0 0 3px rgba(14,165,233,.15);
+}
+
+/* ─── LOGIN PAGE ──────────────────────────────────────────── */
+.gh-login-body {
+  background: linear-gradient(135deg, #0c1a2e 0%, #0e3a5e 50%, #0284c7 100%);
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+}
+.gh-login-container { width: 100%; max-width: 420px; padding: 20px; }
+.gh-login-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 40px 36px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.3);
+}
+.gh-login-header { text-align: center; margin-bottom: 32px; }
+.gh-login-icon {
+  width: 64px; height: 64px;
+  background: var(--gh-primary);
+  border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem; color: #fff;
+  margin: 0 auto 16px;
+}
+.gh-login-title { font-size: 1.5rem; font-weight: 800; color: var(--gh-text); margin: 0; }
+.gh-login-subtitle { color: var(--gh-muted); font-size: .88rem; margin-top: 4px; }
+
+/* ─── PRINT ───────────────────────────────────────────────── */
+@media print {
+  .gh-sidebar, .gh-topbar, .gh-page-header .btn, .btn, .nav-tabs { display: none !important; }
+  .gh-main { margin-left: 0 !important; }
+  .gh-card { box-shadow: none !important; border: 1px solid #ddd !important; }
+  body { background: #fff !important; }
+}
+
+/* ─── RESPONSIVE ──────────────────────────────────────────── */
+@media (max-width: 991px) {
+  .gh-main { padding-top: var(--gh-topbar-h); }
+  .gh-content { padding: 16px 12px; }
+  .gh-page-header { padding: 20px 16px 16px; }
+}
+
+/* ─── SCROLLBAR ───────────────────────────────────────────── */
+.gh-sidebar::-webkit-scrollbar { width: 4px; }
+.gh-sidebar::-webkit-scrollbar-track { background: transparent; }
+.gh-sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,.2); border-radius: 2px; }

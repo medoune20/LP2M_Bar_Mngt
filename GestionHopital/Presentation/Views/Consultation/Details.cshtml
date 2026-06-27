@@ -1,0 +1,157 @@
+@model Consultation
+@{
+    ViewData["Title"] = "Consultation";
+}
+
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <div>
+            <h1 class="gh-page-title"><i class="bi bi-clipboard2-pulse me-2"></i>Compte-rendu de consultation</h1>
+            <p class="gh-page-subtitle">@Model.DateHeure.ToString("dddd dd MMMM yyyy HH:mm")</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/Patient/Details/@Model.PatientId" class="btn btn-outline-primary"><i class="bi bi-folder2-open me-1"></i>Dossier patient</a>
+            <button onclick="window.print()" class="btn btn-outline-secondary"><i class="bi bi-printer me-1"></i>Imprimer</button>
+        </div>
+    </div>
+</div>
+
+<div class="gh-content">
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="gh-card mb-3">
+                <div class="gh-card-header"><h6 class="gh-card-title"><i class="bi bi-person me-2"></i>Patient</h6></div>
+                <div class="gh-card-body">
+                    <dl class="gh-dl">
+                        <dt>Nom complet</dt><dd class="fw-bold">@Model.Patient?.NomComplet</dd>
+                        <dt>N° Dossier</dt><dd><span class="gh-dossier-badge">@Model.Patient?.NuméroDossier</span></dd>
+                        <dt>Âge / Sexe</dt><dd>@Model.Patient?.Âge ans / @Model.Patient?.Sexe</dd>
+                        <dt>Groupe sanguin</dt><dd class="fw-bold text-danger">@Model.Patient?.GroupeSanguinLibellé</dd>
+                        @if (!string.IsNullOrEmpty(Model.Patient?.Allergies))
+                        {
+                            <dt>Allergies</dt><dd class="text-danger">@Model.Patient.Allergies</dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+
+            <div class="gh-card mb-3">
+                <div class="gh-card-header"><h6 class="gh-card-title"><i class="bi bi-person-badge me-2"></i>Médecin</h6></div>
+                <div class="gh-card-body">
+                    <dl class="gh-dl">
+                        <dt>Nom</dt><dd class="fw-bold">@Model.Medecin?.NomComplet</dd>
+                        <dt>Spécialité</dt><dd>@Model.Medecin?.Spécialité</dd>
+                        <dt>Service</dt><dd>@Model.Medecin?.Departement?.Nom</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Signes vitaux -->
+            @if (Model.Poids.HasValue || Model.TensionArtérielle != null || Model.Température.HasValue)
+            {
+                <div class="gh-card mb-3">
+                    <div class="gh-card-header"><h6 class="gh-card-title"><i class="bi bi-activity me-2"></i>Signes vitaux</h6></div>
+                    <div class="gh-card-body">
+                        <div class="row g-2 text-center">
+                            @if (Model.Poids.HasValue) {
+                                <div class="col-6"><div class="gh-vital-card"><div class="gh-vital-val">@Model.Poids</div><div class="gh-vital-lbl">kg</div></div></div>
+                            }
+                            @if (Model.Taille.HasValue) {
+                                <div class="col-6"><div class="gh-vital-card"><div class="gh-vital-val">@Model.Taille</div><div class="gh-vital-lbl">cm</div></div></div>
+                            }
+                            @if (Model.IMC.HasValue) {
+                                <div class="col-6"><div class="gh-vital-card"><div class="gh-vital-val">@Model.IMC</div><div class="gh-vital-lbl">IMC</div></div></div>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.TensionArtérielle)) {
+                                <div class="col-6"><div class="gh-vital-card"><div class="gh-vital-val">@Model.TensionArtérielle</div><div class="gh-vital-lbl">mmHg</div></div></div>
+                            }
+                            @if (Model.Température.HasValue) {
+                                <div class="col-6"><div class="gh-vital-card @(Model.Température > 38.5m ? "bg-danger-subtle" : "")"><div class="gh-vital-val">@Model.Température°</div><div class="gh-vital-lbl">Température</div></div></div>
+                            }
+                            @if (Model.Pouls.HasValue) {
+                                <div class="col-6"><div class="gh-vital-card"><div class="gh-vital-val">@Model.Pouls</div><div class="gh-vital-lbl">bpm</div></div></div>
+                            }
+                            @if (Model.Saturation.HasValue) {
+                                <div class="col-6"><div class="gh-vital-card @(Model.Saturation < 95 ? "bg-danger-subtle" : "")"><div class="gh-vital-val">@Model.Saturation%</div><div class="gh-vital-lbl">SpO2</div></div></div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="col-lg-8">
+            <div class="gh-card mb-3">
+                <div class="gh-card-header">
+                    <h6 class="gh-card-title"><i class="bi bi-stethoscope me-2"></i>Compte-rendu médical</h6>
+                    @if (Model.EstUrgence) { <span class="badge bg-danger">URGENCE</span> }
+                    <span class="badge bg-secondary ms-1">@Model.Type</span>
+                </div>
+                <div class="gh-card-body">
+                    <dl class="gh-dl">
+                        <dt>Motif</dt><dd class="fw-semibold">@Model.Motif</dd>
+                        @if (!string.IsNullOrEmpty(Model.Anamnèse)) { <dt>Anamnèse</dt><dd>@Model.Anamnèse</dd> }
+                        @if (!string.IsNullOrEmpty(Model.ExamenClinique)) { <dt>Examen clinique</dt><dd>@Model.ExamenClinique</dd> }
+                        @if (!string.IsNullOrEmpty(Model.Diagnostic)) { <dt>Diagnostic</dt><dd class="fw-bold text-success">@Model.Diagnostic</dd> }
+                        @if (!string.IsNullOrEmpty(Model.PlanTraitement)) { <dt>Plan de traitement</dt><dd>@Model.PlanTraitement</dd> }
+                        @if (!string.IsNullOrEmpty(Model.NotesConclusion)) { <dt>Conclusion</dt><dd>@Model.NotesConclusion</dd> }
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Ordonnances -->
+            @foreach (var ordo in Model.Ordonnances)
+            {
+                <div class="gh-card mb-3 border-success">
+                    <div class="gh-card-header bg-success-subtle">
+                        <h6 class="gh-card-title text-success"><i class="bi bi-prescription2 me-2"></i>Ordonnance du @ordo.Date.ToString("dd/MM/yyyy")</h6>
+                    </div>
+                    <div class="gh-card-body">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead><tr><th>#</th><th>Médicament</th><th>Dosage</th><th>Fréquence</th><th>Durée</th></tr></thead>
+                                <tbody>
+                                    @foreach (var ligne in ordo.Lignes.OrderBy(l => l.Ordre))
+                                    {
+                                        <tr>
+                                            <td>@ligne.Ordre</td>
+                                            <td><strong>@ligne.Médicament</strong></td>
+                                            <td>@ligne.Dosage</td>
+                                            <td>@ligne.Fréquence</td>
+                                            <td>@ligne.Durée</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        @if (!string.IsNullOrEmpty(ordo.Instructions))
+                        {
+                            <p class="text-muted small mt-2"><i class="bi bi-info-circle me-1"></i>@ordo.Instructions</p>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- Examens prescrits -->
+            @if (Model.Examens.Any())
+            {
+                <div class="gh-card mb-3">
+                    <div class="gh-card-header"><h6 class="gh-card-title"><i class="bi bi-droplet-half me-2"></i>Examens prescrits</h6></div>
+                    <div class="gh-card-body p-0">
+                        @foreach (var e in Model.Examens)
+                        {
+                            <div class="d-flex align-items-center p-3 border-bottom">
+                                <i class="@e.TypeIcone fs-5 me-3 text-primary"></i>
+                                <div class="flex-fill">
+                                    <div class="fw-semibold">@e.Type — @e.Description</div>
+                                    <small class="text-muted">@e.NuméroExamen</small>
+                                </div>
+                                <span class="badge bg-@e.StatutCssClass">@e.Statut</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

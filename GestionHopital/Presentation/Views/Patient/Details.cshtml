@@ -1,0 +1,260 @@
+@model Patient
+@{
+    ViewData["Title"] = "Dossier — " + Model.NomComplet;
+    var consultations = Model.Consultations.OrderByDescending(c => c.DateHeure).ToList();
+    var examens = Model.Examens.OrderByDescending(e => e.DatePrescription).ToList();
+    var hosps = Model.Hospitalisations.OrderByDescending(h => h.DateAdmission).ToList();
+    var rdvs = Model.RendezVous.OrderByDescending(r => r.DateHeure).ToList();
+}
+
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <div>
+            <h1 class="gh-page-title"><i class="bi bi-folder2-open me-2"></i>Dossier Patient</h1>
+            <p class="gh-page-subtitle">N° @Model.NuméroDossier — enregistré le @Model.DateEnregistrement.ToString("dd/MM/yyyy")</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="/RendezVous/Nouveau?patientId=@Model.Id" class="btn btn-primary"><i class="bi bi-calendar-plus me-1"></i>Nouveau RDV</a>
+            <a href="/Consultation/Nouvelle?patientId=@Model.Id" class="btn btn-outline-primary"><i class="bi bi-clipboard2-plus me-1"></i>Consultation</a>
+            <a href="/Hospitalisation/Nouvelle?patientId=@Model.Id" class="btn btn-outline-warning"><i class="bi bi-hospital me-1"></i>Admettre</a>
+            <a href="/Patient/Modifier/@Model.Id" class="btn btn-outline-secondary"><i class="bi bi-pencil me-1"></i>Modifier</a>
+        </div>
+    </div>
+</div>
+
+<div class="gh-content">
+    <div class="row g-3">
+        <!-- Infos patient -->
+        <div class="col-lg-4">
+            <div class="gh-card mb-3">
+                <div class="gh-card-body text-center py-4">
+                    <div class="gh-patient-avatar mb-3">
+                        <i class="bi bi-person-circle"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">@Model.NomComplet</h3>
+                    <p class="text-muted mb-2">@Model.Âge ans &nbsp;·&nbsp; @Model.Sexe</p>
+                    <span class="badge bg-@Model.StatutCssClass fs-6 mb-3">@Model.Statut</span>
+                    <div class="gh-blood-badge mb-3">
+                        <i class="bi bi-droplet-fill text-danger me-1"></i>
+                        <strong>@Model.GroupeSanguinLibellé</strong>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.Allergies))
+                    {
+                        <div class="alert alert-danger py-2 text-start">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <strong>Allergies:</strong> @Model.Allergies
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="gh-card mb-3">
+                <div class="gh-card-header"><h6 class="gh-card-title mb-0"><i class="bi bi-info-circle me-2"></i>Informations</h6></div>
+                <div class="gh-card-body">
+                    <dl class="gh-dl">
+                        <dt>Date de naissance</dt><dd>@Model.DateNaissance.ToString("dd/MM/yyyy")</dd>
+                        <dt>Téléphone</dt><dd>@(Model.Téléphone ?? "—")</dd>
+                        <dt>Email</dt><dd>@(Model.Email ?? "—")</dd>
+                        <dt>Adresse</dt><dd>@(Model.Adresse ?? "—")</dd>
+                        <dt>Contact urgence</dt><dd>@(Model.NomContactUrgence ?? "—")</dd>
+                        @if (!string.IsNullOrEmpty(Model.TéléphoneUrgence))
+                        {
+                            <dt>Tél. urgence</dt><dd>@Model.TéléphoneUrgence</dd>
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Mutuelle))
+                        {
+                            <dt>Mutuelle</dt><dd>@Model.Mutuelle</dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.Antécédents))
+            {
+                <div class="gh-card mb-3">
+                    <div class="gh-card-header"><h6 class="gh-card-title mb-0"><i class="bi bi-clock-history me-2"></i>Antécédents</h6></div>
+                    <div class="gh-card-body">
+                        <p class="text-muted mb-0">@Model.Antécédents</p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Parcours & historique -->
+        <div class="col-lg-8">
+            <!-- Tabs -->
+            <ul class="nav nav-tabs gh-tabs mb-3" id="dossierTabs">
+                <li class="nav-item">
+                    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabConsult">
+                        <i class="bi bi-clipboard2-pulse me-1"></i>Consultations <span class="badge bg-primary ms-1">@consultations.Count</span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabRDV">
+                        <i class="bi bi-calendar3 me-1"></i>RDV <span class="badge bg-info ms-1">@rdvs.Count</span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabExamens">
+                        <i class="bi bi-droplet-half me-1"></i>Examens <span class="badge bg-warning ms-1">@examens.Count</span>
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabHosp">
+                        <i class="bi bi-hospital me-1"></i>Hospitalisations <span class="badge bg-danger ms-1">@hosps.Count</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="dossierTabsContent">
+                <!-- Consultations -->
+                <div class="tab-pane fade show active" id="tabConsult">
+                    <div class="d-flex justify-content-end mb-2">
+                        <a href="/Consultation/Nouvelle?patientId=@Model.Id" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus me-1"></i>Nouvelle consultation
+                        </a>
+                    </div>
+                    @if (!consultations.Any())
+                    {
+                        <div class="text-center text-muted py-4"><i class="bi bi-clipboard-x fs-2 d-block mb-2"></i>Aucune consultation</div>
+                    }
+                    @foreach (var c in consultations)
+                    {
+                        <div class="gh-timeline-item">
+                            <div class="gh-timeline-dot @(c.EstUrgence ? "gh-timeline-urgence" : "")"></div>
+                            <div class="gh-card mb-2">
+                                <div class="gh-card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <strong>@c.DateHeure.ToString("dd/MM/yyyy HH:mm")</strong>
+                                            @if (c.EstUrgence) { <span class="badge bg-danger ms-2">URGENCE</span> }
+                                            <span class="badge bg-secondary ms-1">@c.Type</span>
+                                        </div>
+                                        <a href="/Consultation/Details/@c.Id" class="btn btn-sm btn-outline-primary">Détails</a>
+                                    </div>
+                                    <p class="mb-1"><strong>Motif:</strong> @c.Motif</p>
+                                    @if (!string.IsNullOrEmpty(c.Diagnostic))
+                                    {
+                                        <p class="mb-1"><strong>Diagnostic:</strong> @c.Diagnostic</p>
+                                    }
+                                    <small class="text-muted">@c.Medecin?.NomComplet</small>
+                                    @if (c.Ordonnances.Any())
+                                    {
+                                        <div class="mt-2">
+                                            <span class="badge bg-success-subtle text-success-emphasis">
+                                                <i class="bi bi-prescription2 me-1"></i>@c.Ordonnances.Count ordonnance(s)
+                                            </span>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- RDV -->
+                <div class="tab-pane fade" id="tabRDV">
+                    <div class="d-flex justify-content-end mb-2">
+                        <a href="/RendezVous/Nouveau?patientId=@Model.Id" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus me-1"></i>Nouveau RDV
+                        </a>
+                    </div>
+                    @if (!rdvs.Any())
+                    {
+                        <div class="text-center text-muted py-4"><i class="bi bi-calendar-x fs-2 d-block mb-2"></i>Aucun rendez-vous</div>
+                    }
+                    @foreach (var r in rdvs)
+                    {
+                        <div class="gh-card mb-2">
+                            <div class="gh-card-body d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-semibold">@r.DateHeure.ToString("dd/MM/yyyy HH:mm")</div>
+                                    <small class="text-muted">@r.Medecin?.NomComplet &nbsp;·&nbsp; @r.Motif</small>
+                                </div>
+                                <span class="badge bg-@r.StatutCssClass">@r.Statut</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Examens -->
+                <div class="tab-pane fade" id="tabExamens">
+                    <div class="d-flex justify-content-end mb-2">
+                        <a href="/Examen/Nouveau?patientId=@Model.Id" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus me-1"></i>Prescrire examen
+                        </a>
+                    </div>
+                    @if (!examens.Any())
+                    {
+                        <div class="text-center text-muted py-4"><i class="bi bi-clipboard-x fs-2 d-block mb-2"></i>Aucun examen</div>
+                    }
+                    @foreach (var e in examens)
+                    {
+                        <div class="gh-card mb-2">
+                            <div class="gh-card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <i class="@e.TypeIcone me-2 text-primary"></i>
+                                        <strong>@e.Type</strong> — @e.Description
+                                        <div class="text-muted small">@e.DatePrescription.ToString("dd/MM/yyyy") · @e.MedecinPrescripteur?.NomComplet · @e.NuméroExamen</div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <span class="badge bg-@e.StatutCssClass">@e.Statut</span>
+                                        @if (e.Statut != StatutExamen.Résultats)
+                                        {
+                                            <a href="/Examen/SaisirRésultat/@e.Id" class="btn btn-sm btn-outline-success">Résultat</a>
+                                        }
+                                    </div>
+                                </div>
+                                @if (e.Résultat != null)
+                                {
+                                    <div class="mt-2 p-2 bg-success-subtle rounded">
+                                        <small><strong>Résultat:</strong> @e.Résultat.Résultat</small>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <!-- Hospitalisations -->
+                <div class="tab-pane fade" id="tabHosp">
+                    <div class="d-flex justify-content-end mb-2">
+                        <a href="/Hospitalisation/Nouvelle?patientId=@Model.Id" class="btn btn-sm btn-warning">
+                            <i class="bi bi-plus me-1"></i>Admettre
+                        </a>
+                    </div>
+                    @if (!hosps.Any())
+                    {
+                        <div class="text-center text-muted py-4"><i class="bi bi-house-slash fs-2 d-block mb-2"></i>Aucune hospitalisation</div>
+                    }
+                    @foreach (var h in hosps)
+                    {
+                        <div class="gh-card mb-2">
+                            <div class="gh-card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>@h.NuméroHospitalisation</strong>
+                                        <span class="badge bg-@h.StatutCssClass ms-2">@h.Statut</span>
+                                        <div class="text-muted small">
+                                            Entrée: @h.DateAdmission.ToString("dd/MM/yyyy")
+                                            @if (h.DateSortie.HasValue) { <span> · Sortie: @h.DateSortie.Value.ToString("dd/MM/yyyy")</span> }
+                                            · @h.DuréeJours jour(s)
+                                        </div>
+                                        <div>@h.Departement?.Nom · Lit @h.Lit?.Numéro · @h.MedecinRéférent?.NomComplet</div>
+                                        <div class="text-muted small">Motif: @h.MotifAdmission</div>
+                                    </div>
+                                    @if (h.Statut == StatutHospitalisation.EnCours)
+                                    {
+                                        <a href="/Hospitalisation/Sortie/@h.Id" class="btn btn-sm btn-outline-warning">Sortie</a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

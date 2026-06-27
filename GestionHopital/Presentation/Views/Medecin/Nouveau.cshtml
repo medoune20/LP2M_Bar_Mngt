@@ -1,0 +1,47 @@
+@model Medecin
+@{
+    ViewData["Title"] = "Nouveau médecin";
+    var depts = ViewBag.Departements as List<Departement> ?? new();
+}
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <h1 class="gh-page-title"><i class="bi bi-person-plus me-2"></i>Ajouter un médecin</h1>
+        <a href="/Medecin" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
+<div class="gh-content">
+    <form method="post" action="/Medecin/Nouveau">
+        @Html.AntiForgeryToken()
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="gh-card">
+                    <div class="gh-card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6"><label class="form-label fw-semibold">Nom *</label><input type="text" name="Nom" class="form-control" required /></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">Prénom *</label><input type="text" name="Prénom" class="form-control" required /></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">Spécialité *</label><input type="text" name="Spécialité" class="form-control" required placeholder="Cardiologie, Pédiatrie..." /></div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Service *</label>
+                                <select name="DépartementId" class="form-select" required>
+                                    <option value="">Sélectionner</option>
+                                    @foreach (var d in depts) { <option value="@d.Id">@d.Nom</option> }
+                                </select>
+                            </div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">Téléphone</label><input type="tel" name="Téléphone" class="form-control" /></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">Email</label><input type="email" name="Email" class="form-control" /></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">N° Ordre médical</label><input type="text" name="NuméroOrdre" class="form-control" /></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="gh-card">
+                    <div class="gh-card-body d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-save me-2"></i>Enregistrer</button>
+                        <a href="/Medecin" class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

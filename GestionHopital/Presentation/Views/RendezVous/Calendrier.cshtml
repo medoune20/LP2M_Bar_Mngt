@@ -1,0 +1,76 @@
+@model List<RendezVous>
+@{
+    ViewData["Title"] = "Calendrier";
+    var calData = ViewBag.CalendrierData as Dictionary<string, List<RendezVous>> ?? new();
+    var début = (DateTime)ViewBag.Début;
+    var médecins = ViewBag.Medecins as List<Medecin> ?? new();
+}
+
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <div>
+            <h1 class="gh-page-title"><i class="bi bi-calendar-week me-2"></i>Calendrier des rendez-vous</h1>
+            <p class="gh-page-subtitle">14 prochains jours</p>
+        </div>
+        <a href="/RendezVous/Nouveau" class="btn btn-primary"><i class="bi bi-calendar-plus me-1"></i>Nouveau RDV</a>
+    </div>
+</div>
+
+<div class="gh-content">
+    <div class="gh-card mb-4">
+        <div class="gh-card-body py-2">
+            <form method="get" class="d-flex gap-3 align-items-center">
+                <label class="fw-semibold mb-0">Médecin:</label>
+                <select name="medecinId" class="form-select w-auto" onchange="this.form.submit()">
+                    <option value="">Tous</option>
+                    @foreach (var m in médecins)
+                    {
+                        <option value="@m.Id" @(ViewBag.MedecinIdFiltre?.ToString() == m.Id.ToString() ? "selected" : "")>@m.NomComplet</option>
+                    }
+                </select>
+            </form>
+        </div>
+    </div>
+
+    <div class="gh-calendar-grid">
+        @for (int i = 0; i < 14; i++)
+        {
+            var jour = début.AddDays(i);
+            var clé = jour.ToString("yyyy-MM-dd");
+            var rdvsJour = calData.ContainsKey(clé) ? calData[clé] : new();
+            var estAujourdHui = jour.Date == DateTime.Today;
+            <div class="gh-calendar-day @(estAujourdHui ? "gh-calendar-today" : "")">
+                <div class="gh-calendar-day-header">
+                    <div class="gh-calendar-day-num @(estAujourdHui ? "text-white bg-primary rounded-circle" : "")">@jour.Day</div>
+                    <div class="gh-calendar-day-name">@jour.ToString("ddd")</div>
+                    @if (rdvsJour.Any())
+                    {
+                        <span class="badge bg-primary rounded-pill">@rdvsJour.Count</span>
+                    }
+                </div>
+                <div class="gh-calendar-day-body">
+                    @if (!rdvsJour.Any())
+                    {
+                        <div class="text-muted small text-center py-2">—</div>
+                    }
+                    @foreach (var rdv in rdvsJour.Take(5))
+                    {
+                        <a href="/RendezVous?date=@clé" class="gh-cal-rdv gh-cal-rdv-@rdv.StatutCssClass text-decoration-none d-block mb-1">
+                            <div class="gh-cal-rdv-time">@rdv.DateHeure.ToString("HH:mm")</div>
+                            <div class="gh-cal-rdv-name">@rdv.Patient?.Prénom @rdv.Patient?.Nom</div>
+                        </a>
+                    }
+                    @if (rdvsJour.Count > 5)
+                    {
+                        <div class="text-muted small text-center">+@(rdvsJour.Count - 5) autres</div>
+                    }
+                </div>
+                <div class="gh-calendar-day-footer">
+                    <a href="/RendezVous/Nouveau?date=@clé" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="bi bi-plus"></i>
+                    </a>
+                </div>
+            </div>
+        }
+    </div>
+</div>

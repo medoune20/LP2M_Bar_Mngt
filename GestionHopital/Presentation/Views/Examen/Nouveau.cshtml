@@ -1,0 +1,66 @@
+@model Examen
+@{
+    ViewData["Title"] = "Prescrire un examen";
+    var patient = ViewBag.Patient as Patient;
+    var médecins = ViewBag.Medecins as List<Medecin> ?? new();
+}
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <h1 class="gh-page-title"><i class="bi bi-droplet-half me-2"></i>Prescrire un examen</h1>
+        <a href="/Examen" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
+<div class="gh-content">
+    <form method="post" action="/Examen/Nouveau">
+        @Html.AntiForgeryToken()
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="gh-card">
+                    <div class="gh-card-header"><h5 class="gh-card-title">Détails de l'examen</h5></div>
+                    <div class="gh-card-body">
+                        @if (patient != null)
+                        {
+                            <input type="hidden" name="PatientId" value="@patient.Id" />
+                            <div class="gh-patient-selected p-3 rounded border mb-3">
+                                <div class="fw-bold">@patient.NomComplet</div>
+                                <div class="text-muted small">@patient.NuméroDossier · @patient.Âge ans</div>
+                            </div>
+                        }
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Type d'examen</label>
+                                <select name="Type" class="form-select">
+                                    @foreach (TypeExamen t in Enum.GetValues(typeof(TypeExamen)))
+                                    { <option value="@((int)t)">@t</option> }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Médecin prescripteur</label>
+                                <select name="MedecinPrescripteurId" class="form-select">
+                                    @foreach (var m in médecins)
+                                    { <option value="@m.Id" @(Model.MedecinPrescripteurId == m.Id ? "selected" : "")>@m.NomComplet</option> }
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Description / Intitulé <span class="text-danger">*</span></label>
+                                <input type="text" name="Description" class="form-control" required placeholder="Ex: NFS, Glycémie à jeun, Radiographie thoracique..." />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Instructions</label>
+                                <textarea name="Instructions" class="form-control" rows="2" placeholder="Préparation requise, urgence..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="gh-card">
+                    <div class="gh-card-body d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-send me-2"></i>Prescrire</button>
+                        <a href="/Examen" class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

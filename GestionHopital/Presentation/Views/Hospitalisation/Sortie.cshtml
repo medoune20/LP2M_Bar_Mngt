@@ -1,0 +1,61 @@
+@model Hospitalisation
+@{
+    ViewData["Title"] = "Sortie patient";
+}
+
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <h1 class="gh-page-title"><i class="bi bi-box-arrow-right me-2"></i>Sortie du patient</h1>
+        <a href="/Hospitalisation" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
+
+<div class="gh-content">
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="gh-card mb-3">
+                <div class="gh-card-header"><h6 class="gh-card-title">Récapitulatif hospitalisation</h6></div>
+                <div class="gh-card-body">
+                    <dl class="gh-dl">
+                        <dt>Patient</dt><dd class="fw-bold">@Model.Patient?.NomComplet</dd>
+                        <dt>N° Dossier</dt><dd>@Model.Patient?.NuméroDossier</dd>
+                        <dt>N° Hospitalisation</dt><dd>@Model.NuméroHospitalisation</dd>
+                        <dt>Service</dt><dd>@Model.Departement?.Nom</dd>
+                        <dt>Lit</dt><dd>@Model.Lit?.Numéro</dd>
+                        <dt>Date admission</dt><dd>@Model.DateAdmission.ToString("dd/MM/yyyy HH:mm")</dd>
+                        <dt>Durée</dt><dd class="fw-bold">@Model.DuréeJours jour(s)</dd>
+                        <dt>Motif d'admission</dt><dd>@Model.MotifAdmission</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <form method="post" action="/Hospitalisation/Sortie/@Model.Id">
+                @Html.AntiForgeryToken()
+                <div class="gh-card">
+                    <div class="gh-card-header"><h5 class="gh-card-title"><i class="bi bi-file-medical me-2"></i>Compte-rendu de sortie</h5></div>
+                    <div class="gh-card-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Diagnostic final</label>
+                            <input type="text" name="diagnosticFinal" class="form-control" placeholder="Diagnostic définitif..." />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Conditions de sortie</label>
+                            <input type="text" name="conditionsSortie" class="form-control" placeholder="Ex: Guéri, Amélioré, Transféré, Contre avis médical..." />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Compte-rendu d'hospitalisation</label>
+                            <textarea name="compteRendu" class="form-control" rows="6" placeholder="Résumé du séjour, évolution, traitements administrés, recommandations..."></textarea>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="bi bi-box-arrow-right me-2"></i>Valider la sortie
+                            </button>
+                            <a href="/Hospitalisation" class="btn btn-outline-secondary btn-lg">Annuler</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

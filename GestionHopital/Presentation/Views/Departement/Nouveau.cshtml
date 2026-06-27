@@ -1,0 +1,44 @@
+@model Departement
+@{
+    ViewData["Title"] = "Nouveau service";
+}
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <h1 class="gh-page-title"><i class="bi bi-diagram-3 me-2"></i>Créer un service</h1>
+        <a href="/Departement" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
+<div class="gh-content">
+    <form method="post" action="/Departement/Nouveau">
+        @Html.AntiForgeryToken()
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="gh-card">
+                    <div class="gh-card-body">
+                        <div class="row g-3">
+                            <div class="col-12"><label class="form-label fw-semibold">Nom du service *</label><input type="text" name="Nom" class="form-control" required placeholder="Ex: Cardiologie, Pédiatrie..." /></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">Localisation</label><input type="text" name="Localisation" class="form-control" placeholder="Bâtiment A, 1er étage..." /></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">Chef de service</label><input type="text" name="ChefService" class="form-control" placeholder="Dr. Nom Prénom" /></div>
+                            <div class="col-md-4"><label class="form-label fw-semibold">Capacité (lits)</label><input type="number" name="CapacitéLits" class="form-control" value="0" min="0" /></div>
+                            <div class="col-md-4"><label class="form-label fw-semibold">Téléphone/Poste</label><input type="text" name="Téléphone" class="form-control" /></div>
+                            <div class="col-12"><label class="form-label fw-semibold">Description</label><textarea name="Description" class="form-control" rows="2"></textarea></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="gh-card">
+                    <div class="gh-card-body d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-save me-2"></i>Créer le service</button>
+                        <a href="/Departement" class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                    <div class="gh-card-body pt-0">
+                        <div class="alert alert-info py-2 small">
+                            <i class="bi bi-info-circle me-1"></i>Les lits seront créés automatiquement selon la capacité.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

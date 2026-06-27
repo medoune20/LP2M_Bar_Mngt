@@ -1,0 +1,64 @@
+@model Examen
+@{
+    ViewData["Title"] = "Examen " + Model.NuméroExamen;
+}
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <div>
+            <h1 class="gh-page-title"><i class="@Model.TypeIcone me-2"></i>@Model.Type</h1>
+            <p class="gh-page-subtitle">@Model.NuméroExamen</p>
+        </div>
+        <a href="/Examen" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
+<div class="gh-content">
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="gh-card mb-3">
+                <div class="gh-card-header"><h6 class="gh-card-title">Informations</h6></div>
+                <div class="gh-card-body">
+                    <dl class="gh-dl">
+                        <dt>Patient</dt><dd class="fw-bold">@Model.Patient?.NomComplet</dd>
+                        <dt>N° Dossier</dt><dd><span class="gh-dossier-badge">@Model.Patient?.NuméroDossier</span></dd>
+                        <dt>Prescrit par</dt><dd>@Model.MedecinPrescripteur?.NomComplet</dd>
+                        <dt>Date prescription</dt><dd>@Model.DatePrescription.ToString("dd/MM/yyyy HH:mm")</dd>
+                        @if (Model.DateRéalisation.HasValue) { <dt>Réalisé le</dt><dd>@Model.DateRéalisation.Value.ToString("dd/MM/yyyy")</dd> }
+                        <dt>Description</dt><dd>@Model.Description</dd>
+                        @if (!string.IsNullOrEmpty(Model.Instructions)) { <dt>Instructions</dt><dd>@Model.Instructions</dd> }
+                        <dt>Statut</dt><dd><span class="badge bg-@Model.StatutCssClass">@Model.Statut</span></dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            @if (Model.Résultat != null)
+            {
+                <div class="gh-card">
+                    <div class="gh-card-header bg-success-subtle">
+                        <h6 class="gh-card-title text-success"><i class="bi bi-clipboard-check me-2"></i>Résultat</h6>
+                        <small class="text-muted">@Model.Résultat.Date.ToString("dd/MM/yyyy HH:mm")</small>
+                    </div>
+                    <div class="gh-card-body">
+                        <div class="mb-3"><strong>Résultat:</strong><div class="mt-1 p-3 bg-light rounded">@Model.Résultat.Résultat</div></div>
+                        @if (!string.IsNullOrEmpty(Model.Résultat.Observations))
+                        { <div class="mb-2"><strong>Observations:</strong><div class="text-muted mt-1">@Model.Résultat.Observations</div></div> }
+                        @if (!string.IsNullOrEmpty(Model.Résultat.Technicien))
+                        { <small class="text-muted"><i class="bi bi-person me-1"></i>Réalisé par: @Model.Résultat.Technicien</small> }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="gh-card">
+                    <div class="gh-card-body text-center py-4 text-muted">
+                        <i class="bi bi-hourglass-split fs-2 d-block mb-2"></i>
+                        <p>Résultat en attente</p>
+                        <a href="/Examen/SaisirRésultat/@Model.Id" class="btn btn-success">
+                            <i class="bi bi-pencil-square me-1"></i>Saisir le résultat
+                        </a>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

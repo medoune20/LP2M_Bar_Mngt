@@ -1,0 +1,82 @@
+@model List<Examen>
+@{
+    ViewData["Title"] = "Examens";
+}
+
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <div>
+            <h1 class="gh-page-title"><i class="bi bi-droplet-half me-2"></i>Examens & Analyses</h1>
+            <p class="gh-page-subtitle">@Model.Count résultats</p>
+        </div>
+        <a href="/Examen/Nouveau" class="btn btn-primary"><i class="bi bi-plus me-1"></i>Prescrire un examen</a>
+    </div>
+</div>
+
+<div class="gh-content">
+    <div class="gh-card mb-4">
+        <div class="gh-card-body py-2">
+            <form method="get" class="d-flex gap-3 align-items-center flex-wrap">
+                <select name="statut" class="form-select w-auto" onchange="this.form.submit()">
+                    <option value="">Tous statuts</option>
+                    @foreach (StatutExamen s in Enum.GetValues(typeof(StatutExamen)))
+                    { <option value="@s" @(ViewBag.StatutFiltre?.ToString() == s.ToString() ? "selected" : "")>@s</option> }
+                </select>
+                <select name="type" class="form-select w-auto" onchange="this.form.submit()">
+                    <option value="">Tous types</option>
+                    @foreach (TypeExamen t in Enum.GetValues(typeof(TypeExamen)))
+                    { <option value="@((int)t)" @(ViewBag.TypeFiltre?.ToString() == ((int)t).ToString() ? "selected" : "")>@t</option> }
+                </select>
+                <a href="/Examen" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x"></i> Réinitialiser</a>
+            </form>
+        </div>
+    </div>
+
+    <div class="gh-card">
+        <div class="gh-card-body p-0">
+            <div class="table-responsive">
+                <table class="gh-table table">
+                    <thead>
+                        <tr>
+                            <th>N° Examen</th>
+                            <th>Patient</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Prescrit par</th>
+                            <th>Date</th>
+                            <th>Statut</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var e in Model)
+                        {
+                            <tr>
+                                <td><span class="gh-dossier-badge">@e.NuméroExamen</span></td>
+                                <td><a href="/Patient/Details/@e.PatientId" class="text-decoration-none fw-semibold">@e.Patient?.NomComplet</a></td>
+                                <td><i class="@e.TypeIcone me-1"></i>@e.Type</td>
+                                <td>@e.Description</td>
+                                <td>@e.MedecinPrescripteur?.NomComplet</td>
+                                <td>@e.DatePrescription.ToString("dd/MM/yyyy")</td>
+                                <td><span class="badge bg-@e.StatutCssClass">@e.Statut</span></td>
+                                <td class="text-end">
+                                    <div class="d-flex gap-1 justify-content-end">
+                                        @if (e.Statut != StatutExamen.Résultats && e.Statut != StatutExamen.Annulé)
+                                        {
+                                            <a href="/Examen/SaisirRésultat/@e.Id" class="btn btn-sm btn-outline-success" title="Saisir résultat">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </a>
+                                        }
+                                        <a href="/Examen/Details/@e.Id" class="btn btn-sm btn-outline-primary" title="Détails">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

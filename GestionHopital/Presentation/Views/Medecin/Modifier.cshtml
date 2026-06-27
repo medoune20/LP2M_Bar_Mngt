@@ -1,0 +1,53 @@
+@model Medecin
+@{
+    ViewData["Title"] = "Modifier médecin";
+    var depts = ViewBag.Departements as List<Departement> ?? new();
+}
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <h1 class="gh-page-title"><i class="bi bi-pencil me-2"></i>Modifier — @Model.NomComplet</h1>
+        <a href="/Medecin" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
+<div class="gh-content">
+    <form method="post" action="/Medecin/Modifier">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="gh-card">
+                    <div class="gh-card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6"><label class="form-label fw-semibold">Nom *</label><input type="text" name="Nom" class="form-control" value="@Model.Nom" required /></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">Prénom *</label><input type="text" name="Prénom" class="form-control" value="@Model.Prénom" required /></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">Spécialité *</label><input type="text" name="Spécialité" class="form-control" value="@Model.Spécialité" required /></div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Service *</label>
+                                <select name="DépartementId" class="form-select" required>
+                                    @foreach (var d in depts) { <option value="@d.Id" @(Model.DépartementId == d.Id ? "selected" : "")>@d.Nom</option> }
+                                </select>
+                            </div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">Téléphone</label><input type="tel" name="Téléphone" class="form-control" value="@Model.Téléphone" /></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">Email</label><input type="email" name="Email" class="form-control" value="@Model.Email" /></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">N° Ordre</label><input type="text" name="NuméroOrdre" class="form-control" value="@Model.NuméroOrdre" /></div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="Actif" value="true" @(Model.Actif ? "checked" : "") />
+                                    <label class="form-check-label fw-semibold">Actif</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="gh-card">
+                    <div class="gh-card-body d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-save me-2"></i>Enregistrer</button>
+                        <a href="/Medecin" class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

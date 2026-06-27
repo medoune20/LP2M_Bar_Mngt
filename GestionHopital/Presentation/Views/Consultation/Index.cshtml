@@ -1,0 +1,96 @@
+@model List<Consultation>
+@{
+    ViewData["Title"] = "Consultations";
+    var médecins = ViewBag.Medecins as List<Medecin> ?? new();
+}
+
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <div>
+            <h1 class="gh-page-title"><i class="bi bi-clipboard2-pulse me-2"></i>Consultations</h1>
+            <p class="gh-page-subtitle">@DateTime.Parse(ViewBag.DateFiltre).ToString("dddd dd MMMM yyyy")</p>
+        </div>
+        <a href="/Consultation/Nouvelle" class="btn btn-primary"><i class="bi bi-plus me-1"></i>Nouvelle consultation</a>
+    </div>
+</div>
+
+<div class="gh-content">
+    <div class="gh-card mb-4">
+        <div class="gh-card-body">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Date</label>
+                    <input type="date" name="date" class="form-control" value="@ViewBag.DateFiltre" />
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">Médecin</label>
+                    <select name="medecinId" class="form-select">
+                        <option value="">Tous</option>
+                        @foreach (var m in médecins)
+                        {
+                            <option value="@m.Id" @(ViewBag.MedecinIdFiltre?.ToString() == m.Id.ToString() ? "selected" : "")>@m.NomComplet</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-1">
+                    <button type="submit" class="btn btn-primary flex-fill"><i class="bi bi-search me-1"></i>Filtrer</button>
+                    <a href="/Consultation" class="btn btn-outline-secondary"><i class="bi bi-x"></i></a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="gh-card">
+        <div class="gh-card-body p-0">
+            @if (!Model.Any())
+            {
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-clipboard-x fs-1 d-block mb-2"></i>Aucune consultation pour cette date.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="gh-table table">
+                        <thead>
+                            <tr>
+                                <th>Heure</th>
+                                <th>Patient</th>
+                                <th>Médecin</th>
+                                <th>Motif / Diagnostic</th>
+                                <th>Type</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var c in Model)
+                            {
+                                <tr>
+                                    <td>
+                                        <strong class="text-primary">@c.DateHeure.ToString("HH:mm")</strong>
+                                        @if (c.EstUrgence) { <span class="badge bg-danger ms-1">URGENCE</span> }
+                                    </td>
+                                    <td><a href="/Patient/Details/@c.PatientId" class="fw-semibold text-decoration-none">@c.Patient?.NomComplet</a></td>
+                                    <td>@c.Medecin?.NomComplet</td>
+                                    <td>
+                                        <div>@c.Motif</div>
+                                        @if (!string.IsNullOrEmpty(c.Diagnostic))
+                                        {
+                                            <small class="text-success"><i class="bi bi-check me-1"></i>@c.Diagnostic</small>
+                                        }
+                                    </td>
+                                    <td><span class="badge bg-light text-dark border">@c.Type</span></td>
+                                    <td class="text-end">
+                                        <a href="/Consultation/Details/@c.Id" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

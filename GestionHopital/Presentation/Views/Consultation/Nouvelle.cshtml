@@ -1,0 +1,178 @@
+@model Consultation
+@{
+    ViewData["Title"] = "Nouvelle consultation";
+    var rdv = ViewBag.RendezVous as RendezVous;
+    var patient = ViewBag.Patient as Patient;
+    var médecins = ViewBag.Medecins as List<Medecin> ?? new();
+}
+
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <div>
+            <h1 class="gh-page-title"><i class="bi bi-clipboard2-pulse me-2"></i>Consultation médicale</h1>
+            @if (patient != null)
+            {
+                <p class="gh-page-subtitle">@patient.NomComplet — @patient.NuméroDossier</p>
+            }
+        </div>
+        <a href="/RendezVous" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
+
+<div class="gh-content">
+    @if (patient != null && !string.IsNullOrEmpty(patient.Allergies))
+    {
+        <div class="alert alert-danger alert-dismissible mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>ALLERGIES:</strong> @patient.Allergies
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <form method="post" action="/Consultation/Nouvelle">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="PatientId" value="@Model.PatientId" />
+        <input type="hidden" name="RendezVousId" value="@Model.RendezVousId" />
+
+        <div class="row g-3">
+            <!-- Colonne principale -->
+            <div class="col-lg-8">
+                <!-- Identification -->
+                <div class="gh-card mb-3">
+                    <div class="gh-card-header"><h5 class="gh-card-title"><i class="bi bi-info-circle me-2"></i>Identification</h5></div>
+                    <div class="gh-card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Médecin <span class="text-danger">*</span></label>
+                                <select name="MedecinId" class="form-select" required>
+                                    @foreach (var m in médecins)
+                                    {
+                                        <option value="@m.Id" @(Model.MedecinId == m.Id ? "selected" : "")>@m.NomComplet — @m.Spécialité</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Type</label>
+                                <select name="Type" class="form-select">
+                                    @foreach (TypeConsultation t in Enum.GetValues(typeof(TypeConsultation)))
+                                    {
+                                        <option value="@((int)t)" @(Model.Type == t ? "selected" : "")>@t</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="EstUrgence" id="urgence" @(Model.EstUrgence ? "checked" : "") />
+                                    <label class="form-check-label fw-semibold text-danger" for="urgence">URGENCE</label>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Motif <span class="text-danger">*</span></label>
+                                <input type="text" name="Motif" class="form-control" value="@Model.Motif" required placeholder="Motif principal de consultation" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Signes vitaux -->
+                <div class="gh-card mb-3">
+                    <div class="gh-card-header"><h5 class="gh-card-title"><i class="bi bi-activity me-2"></i>Signes vitaux</h5></div>
+                    <div class="gh-card-body">
+                        <div class="row g-3">
+                            <div class="col-6 col-md-3">
+                                <label class="form-label fw-semibold">Poids (kg)</label>
+                                <input type="number" name="Poids" class="form-control" step="0.1" placeholder="70.0" />
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label fw-semibold">Taille (cm)</label>
+                                <input type="number" name="Taille" class="form-control" step="0.5" placeholder="175" />
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label fw-semibold">Tension artérielle</label>
+                                <input type="text" name="TensionArtérielle" class="form-control" placeholder="120/80" />
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label class="form-label fw-semibold">Température (°C)</label>
+                                <input type="number" name="Température" class="form-control" step="0.1" placeholder="37.2" />
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <label class="form-label fw-semibold">Pouls (bpm)</label>
+                                <input type="number" name="Pouls" class="form-control" placeholder="72" />
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <label class="form-label fw-semibold">SpO2 (%)</label>
+                                <input type="number" name="Saturation" class="form-control" placeholder="98" min="0" max="100" />
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <label class="form-label fw-semibold">Glycémie (mg/dL)</label>
+                                <input type="number" name="Glycémie" class="form-control" placeholder="90" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Anamnèse & Examen -->
+                <div class="gh-card mb-3">
+                    <div class="gh-card-header"><h5 class="gh-card-title"><i class="bi bi-stethoscope me-2"></i>Anamnèse & Examen clinique</h5></div>
+                    <div class="gh-card-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Anamnèse (histoire de la maladie)</label>
+                            <textarea name="Anamnèse" class="form-control" rows="3" placeholder="Début des symptômes, évolution, traitements en cours..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Examen clinique</label>
+                            <textarea name="ExamenClinique" class="form-control" rows="3" placeholder="Résultats de l'examen physique..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Diagnostic</label>
+                            <input type="text" name="Diagnostic" class="form-control" placeholder="Diagnostic principal..." />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Plan de traitement</label>
+                            <textarea name="PlanTraitement" class="form-control" rows="2" placeholder="Plan thérapeutique, suivi prévu..."></textarea>
+                        </div>
+                        <div>
+                            <label class="form-label fw-semibold">Notes & Conclusion</label>
+                            <textarea name="NotesConclusion" class="form-control" rows="2" placeholder="Remarques supplémentaires..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ordonnance rapide -->
+            <div class="col-lg-4">
+                <div class="gh-card mb-3 border-success">
+                    <div class="gh-card-header bg-success-subtle">
+                        <h5 class="gh-card-title text-success"><i class="bi bi-prescription2 me-2"></i>Ordonnance</h5>
+                    </div>
+                    <div class="gh-card-body">
+                        <p class="text-muted small">Saisissez chaque médicament sur une nouvelle ligne</p>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold small">Médicaments</label>
+                            <textarea name="médicaments" class="form-control font-monospace" rows="4" placeholder="Paracétamol 500mg&#10;Amoxicilline 1g&#10;..."></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold small">Dosages</label>
+                            <textarea name="dosages" class="form-control font-monospace" rows="4" placeholder="2 comprimés&#10;1 comprimé&#10;..."></textarea>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label fw-semibold small">Fréquence</label>
+                            <textarea name="fréquences" class="form-control font-monospace" rows="4" placeholder="3x/jour&#10;2x/jour&#10;..."></textarea>
+                        </div>
+                        <div>
+                            <label class="form-label fw-semibold small">Durée</label>
+                            <textarea name="durées" class="form-control font-monospace" rows="4" placeholder="5 jours&#10;7 jours&#10;..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-save me-2"></i>Enregistrer la consultation
+                    </button>
+                    <a href="/RendezVous" class="btn btn-outline-secondary">Annuler</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

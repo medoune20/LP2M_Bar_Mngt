@@ -1,0 +1,71 @@
+@model Patient
+@{
+    ViewData["Title"] = "Modifier patient";
+}
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <h1 class="gh-page-title"><i class="bi bi-pencil me-2"></i>Modifier — @Model.NomComplet</h1>
+        <a href="/Patient/Details/@Model.Id" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
+<div class="gh-content">
+    <form method="post" action="/Patient/Modifier">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="Id" value="@Model.Id" />
+        <input type="hidden" name="NuméroDossier" value="@Model.NuméroDossier" />
+        <input type="hidden" name="DateEnregistrement" value="@Model.DateEnregistrement.ToString("O")" />
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="gh-card mb-3">
+                    <div class="gh-card-header"><h5 class="gh-card-title"><i class="bi bi-person me-2"></i>Identité</h5></div>
+                    <div class="gh-card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6"><label class="form-label fw-semibold">Nom</label><input type="text" name="Nom" class="form-control" value="@Model.Nom" required /></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">Prénom</label><input type="text" name="Prénom" class="form-control" value="@Model.Prénom" required /></div>
+                            <div class="col-md-4"><label class="form-label fw-semibold">Date de naissance</label><input type="date" name="DateNaissance" class="form-control" value="@Model.DateNaissance.ToString("yyyy-MM-dd")" required /></div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Sexe</label>
+                                <select name="Sexe" class="form-select">
+                                    @foreach (SexePatient s in Enum.GetValues(typeof(SexePatient)))
+                                    { <option value="@((int)s)" @(Model.Sexe == s ? "selected" : "")>@s</option> }
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Groupe sanguin</label>
+                                <select name="GroupeSanguin" class="form-select">
+                                    @foreach (GroupeSanguin g in Enum.GetValues(typeof(GroupeSanguin)))
+                                    { <option value="@((int)g)" @(Model.GroupeSanguin == g ? "selected" : "")>@g.ToString().Replace("_pos","+ ").Replace("_neg","−")</option> }
+                                </select>
+                            </div>
+                            <div class="col-12"><label class="form-label fw-semibold">Adresse</label><input type="text" name="Adresse" class="form-control" value="@Model.Adresse" /></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">Téléphone</label><input type="tel" name="Téléphone" class="form-control" value="@Model.Téléphone" /></div>
+                            <div class="col-md-6"><label class="form-label fw-semibold">Email</label><input type="email" name="Email" class="form-control" value="@Model.Email" /></div>
+                            <div class="col-12"><label class="form-label fw-semibold text-danger">Allergies</label><textarea name="Allergies" class="form-control" rows="2">@Model.Allergies</textarea></div>
+                            <div class="col-12"><label class="form-label fw-semibold">Antécédents</label><textarea name="Antécédents" class="form-control" rows="3">@Model.Antécédents</textarea></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="gh-card mb-3">
+                    <div class="gh-card-header"><h6 class="gh-card-title">Contact urgence</h6></div>
+                    <div class="gh-card-body">
+                        <div class="mb-3"><label class="form-label fw-semibold">Nom & Lien</label><input type="text" name="NomContactUrgence" class="form-control" value="@Model.NomContactUrgence" /></div>
+                        <div><label class="form-label fw-semibold">Téléphone</label><input type="tel" name="TéléphoneUrgence" class="form-control" value="@Model.TéléphoneUrgence" /></div>
+                    </div>
+                </div>
+                <div class="gh-card mb-3">
+                    <div class="gh-card-header"><h6 class="gh-card-title">Couverture sociale</h6></div>
+                    <div class="gh-card-body">
+                        <div class="mb-3"><label class="form-label fw-semibold">N° SS</label><input type="text" name="NuméroSécuritéSociale" class="form-control" value="@Model.NuméroSécuritéSociale" /></div>
+                        <div><label class="form-label fw-semibold">Mutuelle</label><input type="text" name="Mutuelle" class="form-control" value="@Model.Mutuelle" /></div>
+                    </div>
+                </div>
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-save me-2"></i>Enregistrer</button>
+                    <a href="/Patient/Details/@Model.Id" class="btn btn-outline-secondary">Annuler</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

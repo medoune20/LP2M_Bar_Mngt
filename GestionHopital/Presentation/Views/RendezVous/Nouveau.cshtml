@@ -1,0 +1,165 @@
+@model RendezVous
+@{
+    ViewData["Title"] = "Nouveau rendez-vous";
+    var médecins = ViewBag.Medecins as List<Medecin> ?? new();
+    var patient = ViewBag.Patient as Patient;
+}
+
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <div>
+            <h1 class="gh-page-title"><i class="bi bi-calendar-plus me-2"></i>Nouveau rendez-vous</h1>
+            <p class="gh-page-subtitle">Planification d'un rendez-vous</p>
+        </div>
+        <a href="/RendezVous" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
+
+<div class="gh-content">
+    <form method="post" action="/RendezVous/Nouveau">
+        @Html.AntiForgeryToken()
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="gh-card mb-3">
+                    <div class="gh-card-header"><h5 class="gh-card-title"><i class="bi bi-person me-2"></i>Patient</h5></div>
+                    <div class="gh-card-body">
+                        @if (patient != null)
+                        {
+                            <input type="hidden" name="PatientId" value="@patient.Id" />
+                            <div class="gh-patient-selected p-3 rounded border">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="gh-patient-mini-avatar"><i class="bi bi-person-circle fs-2 text-primary"></i></div>
+                                    <div>
+                                        <div class="fw-bold fs-5">@patient.NomComplet</div>
+                                        <div class="text-muted">@patient.NuméroDossier · @patient.Âge ans · @patient.Sexe</div>
+                                        @if (!string.IsNullOrEmpty(patient.Allergies))
+                                        {
+                                            <div class="text-danger small"><i class="bi bi-exclamation-triangle me-1"></i>@patient.Allergies</div>
+                                        }
+                                    </div>
+                                    <a href="/RendezVous/Nouveau" class="btn btn-sm btn-outline-secondary ms-auto">Changer</a>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mb-2">
+                                <label class="form-label fw-semibold">Rechercher un patient</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                    <input type="text" id="recherchePatient" class="form-control" placeholder="Nom, prénom ou N° dossier..." autocomplete="off" />
+                                </div>
+                                <div id="resultatRecherche" class="list-group mt-1 d-none position-absolute z-3" style="max-width:500px"></div>
+                            </div>
+                            <input type="hidden" name="PatientId" id="patientIdInput" value="@Model.PatientId" required />
+                            <div id="patientSelectionné" class="d-none gh-patient-selected p-3 rounded border"></div>
+                        }
+                    </div>
+                </div>
+
+                <div class="gh-card mb-3">
+                    <div class="gh-card-header"><h5 class="gh-card-title"><i class="bi bi-calendar-event me-2"></i>Détails du rendez-vous</h5></div>
+                    <div class="gh-card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Médecin <span class="text-danger">*</span></label>
+                                <select name="MedecinId" class="form-select" required>
+                                    <option value="">Sélectionner un médecin</option>
+                                    @foreach (var m in médecins)
+                                    {
+                                        <option value="@m.Id" @(Model.MedecinId == m.Id ? "selected" : "")>@m.NomComplet — @m.Spécialité</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Type de consultation</label>
+                                <select name="TypeConsultation" class="form-select">
+                                    @foreach (TypeConsultation t in Enum.GetValues(typeof(TypeConsultation)))
+                                    {
+                                        <option value="@((int)t)" @(Model.TypeConsultation == t ? "selected" : "")>@t</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Date et heure <span class="text-danger">*</span></label>
+                                <input type="datetime-local" name="DateHeure" class="form-control" value="@Model.DateHeure.ToString("yyyy-MM-ddTHH:mm")" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Durée (minutes)</label>
+                                <select name="Durée" class="form-select">
+                                    <option value="15" @(Model.Durée == 15 ? "selected" : "")>15 min</option>
+                                    <option value="30" @(Model.Durée == 30 ? "selected" : "")>30 min</option>
+                                    <option value="45" @(Model.Durée == 45 ? "selected" : "")>45 min</option>
+                                    <option value="60" @(Model.Durée == 60 ? "selected" : "")>1h</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Motif de consultation <span class="text-danger">*</span></label>
+                                <input type="text" name="Motif" class="form-control" value="@Model.Motif" required placeholder="Ex: Douleurs thoraciques, Suivi diabète..." />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Notes supplémentaires</label>
+                                <textarea name="Notes" class="form-control" rows="2" placeholder="Informations complémentaires...">@Model.Notes</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="gh-card">
+                    <div class="gh-card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-calendar-check me-2"></i>Planifier le rendez-vous
+                            </button>
+                            <a href="/RendezVous" class="btn btn-outline-secondary">Annuler</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+const rechercheInput = document.getElementById('recherchePatient');
+const résultats = document.getElementById('resultatRecherche');
+const patientInput = document.getElementById('patientIdInput');
+const patientDiv = document.getElementById('patientSelectionné');
+
+if (rechercheInput) {
+    let timeout;
+    rechercheInput.addEventListener('input', () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(async () => {
+            const terme = rechercheInput.value.trim();
+            if (terme.length < 2) { résultats.classList.add('d-none'); return; }
+            const rep = await fetch('/Patient/Recherche?terme=' + encodeURIComponent(terme));
+            const data = await rep.json();
+            résultats.innerHTML = '';
+            if (data.length === 0) {
+                résultats.innerHTML = '<div class="list-group-item text-muted">Aucun résultat</div>';
+            } else {
+                data.forEach(p => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'list-group-item list-group-item-action';
+                    btn.innerHTML = `<strong>${p.nomComplet}</strong> <small class="text-muted">${p.numéroDossier} · ${p.dateNaissance}</small>`;
+                    btn.addEventListener('click', () => {
+                        patientInput.value = p.id;
+                        rechercheInput.value = p.nomComplet;
+                        patientDiv.innerHTML = `<div class="fw-bold">${p.nomComplet}</div><div class="text-muted small">${p.numéroDossier} · ${p.dateNaissance}</div>`;
+                        patientDiv.classList.remove('d-none');
+                        résultats.classList.add('d-none');
+                    });
+                    résultats.appendChild(btn);
+                });
+            }
+            résultats.classList.remove('d-none');
+        }, 300);
+    });
+    document.addEventListener('click', e => { if (!rechercheInput.contains(e.target)) résultats.classList.add('d-none'); });
+}
+</script>
+}

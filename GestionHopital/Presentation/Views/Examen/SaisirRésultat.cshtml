@@ -1,0 +1,57 @@
+@model ResultatExamen
+@{
+    ViewData["Title"] = "Saisir résultat";
+    var examen = ViewBag.Examen as Examen;
+}
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <h1 class="gh-page-title"><i class="bi bi-pencil-square me-2"></i>Saisir résultat</h1>
+        <a href="/Examen" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
+<div class="gh-content">
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="gh-card mb-3">
+                <div class="gh-card-header"><h6 class="gh-card-title">Examen</h6></div>
+                <div class="gh-card-body">
+                    <dl class="gh-dl">
+                        <dt>N°</dt><dd class="gh-dossier-badge">@examen?.NuméroExamen</dd>
+                        <dt>Patient</dt><dd class="fw-bold">@examen?.Patient?.NomComplet</dd>
+                        <dt>Type</dt><dd>@examen?.Type</dd>
+                        <dt>Description</dt><dd>@examen?.Description</dd>
+                        <dt>Prescrit le</dt><dd>@examen?.DatePrescription.ToString("dd/MM/yyyy")</dd>
+                        <dt>Prescrit par</dt><dd>@examen?.MedecinPrescripteur?.NomComplet</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <form method="post" action="/Examen/SaisirRésultat">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ExamenId" value="@Model.ExamenId" />
+                <div class="gh-card">
+                    <div class="gh-card-header"><h5 class="gh-card-title"><i class="bi bi-clipboard-check me-2"></i>Résultat de l'examen</h5></div>
+                    <div class="gh-card-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Résultat <span class="text-danger">*</span></label>
+                            <textarea name="Résultat" class="form-control" rows="6" required placeholder="Résultats détaillés de l'examen...">@Model.Résultat</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Observations</label>
+                            <textarea name="Observations" class="form-control" rows="3" placeholder="Interprétation, remarques, valeurs normales...">@Model.Observations</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Technicien / Responsable</label>
+                            <input type="text" name="Technicien" class="form-control" value="@Model.Technicien" placeholder="Nom du technicien..." />
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success btn-lg"><i class="bi bi-check-circle me-2"></i>Enregistrer le résultat</button>
+                            <a href="/Examen" class="btn btn-outline-secondary btn-lg">Annuler</a>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

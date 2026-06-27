@@ -1,0 +1,115 @@
+@model Hospitalisation
+@{
+    ViewData["Title"] = "Nouvelle admission";
+    var patient = ViewBag.Patient as Patient;
+    var médecins = ViewBag.Medecins as List<Medecin> ?? new();
+    var depts = ViewBag.Departements as List<Departement> ?? new();
+}
+
+<div class="gh-page-header">
+    <div class="gh-page-header-inner">
+        <h1 class="gh-page-title"><i class="bi bi-person-check me-2"></i>Nouvelle admission</h1>
+        <a href="/Hospitalisation" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    </div>
+</div>
+
+<div class="gh-content">
+    <form method="post" action="/Hospitalisation/Nouvelle">
+        @Html.AntiForgeryToken()
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="gh-card mb-3">
+                    <div class="gh-card-header"><h5 class="gh-card-title"><i class="bi bi-person me-2"></i>Patient</h5></div>
+                    <div class="gh-card-body">
+                        @if (patient != null)
+                        {
+                            <input type="hidden" name="PatientId" value="@patient.Id" />
+                            <div class="gh-patient-selected p-3 rounded border">
+                                <div class="fw-bold fs-5">@patient.NomComplet</div>
+                                <div class="text-muted">@patient.NuméroDossier · @patient.Âge ans · @patient.Sexe</div>
+                                @if (!string.IsNullOrEmpty(patient.Allergies))
+                                { <div class="text-danger small mt-1"><i class="bi bi-exclamation-triangle me-1"></i>@patient.Allergies</div> }
+                            </div>
+                        }
+                        else
+                        {
+                            <label class="form-label fw-semibold">Patient <span class="text-danger">*</span></label>
+                            <select name="PatientId" class="form-select" required>
+                                <option value="">Sélectionner un patient</option>
+                                @foreach (var p in ViewBag.Patients as List<Patient> ?? new())
+                                { <option value="@p.Id">@p.NomComplet — @p.NuméroDossier</option> }
+                            </select>
+                        }
+                    </div>
+                </div>
+
+                <div class="gh-card mb-3">
+                    <div class="gh-card-header"><h5 class="gh-card-title"><i class="bi bi-diagram-3 me-2"></i>Affectation</h5></div>
+                    <div class="gh-card-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Service <span class="text-danger">*</span></label>
+                                <select name="DépartementId" id="deptSelect" class="form-select" required onchange="chargerLits(this.value)">
+                                    <option value="">Sélectionner un service</option>
+                                    @foreach (var d in depts)
+                                    {
+                                        <option value="@d.Id">@d.Nom (@d.LitsLibres lits libres)</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Lit <span class="text-danger">*</span></label>
+                                <select name="LitId" id="litSelect" class="form-select" required>
+                                    <option value="">D'abord sélectionner un service</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Médecin référent <span class="text-danger">*</span></label>
+                                <select name="MedecinRéférentId" class="form-select" required>
+                                    <option value="">Sélectionner un médecin</option>
+                                    @foreach (var m in médecins)
+                                    { <option value="@m.Id">@m.NomComplet — @m.Spécialité</option> }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Date d'admission</label>
+                                <input type="datetime-local" name="DateAdmission" class="form-control" value="@Model.DateAdmission.ToString("yyyy-MM-ddTHH:mm")" />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-semibold">Motif d'admission <span class="text-danger">*</span></label>
+                                <textarea name="MotifAdmission" class="form-control" rows="3" required placeholder="Raison principale de l'hospitalisation...">@Model.MotifAdmission</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="gh-card">
+                    <div class="gh-card-body">
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-warning btn-lg fw-bold">
+                                <i class="bi bi-hospital me-2"></i>Admettre le patient
+                            </button>
+                            <a href="/Hospitalisation" class="btn btn-outline-secondary">Annuler</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+async function chargerLits(deptId) {
+    const sel = document.getElementById('litSelect');
+    sel.innerHTML = '<option value="">Chargement...</option>';
+    if (!deptId) { sel.innerHTML = '<option value="">D\'abord sélectionner un service</option>'; return; }
+    const rep = await fetch('/Hospitalisation/LitsParDepartement/' + deptId);
+    const lits = await rep.json();
+    sel.innerHTML = lits.length === 0
+        ? '<option value="">Aucun lit libre</option>'
+        : '<option value="">Choisir un lit</option>' + lits.map(l => `<option value="${l.id}">Lit ${l.numéro}</option>`).join('');
+}
+</script>
+}
