@@ -6,7 +6,7 @@ services:
     environment:
       - DATA_DIR=/app/Data
       - ASPNETCORE_ENVIRONMENT=Production
-      # Sous-dossier d'hébergement : l'app vit sous lp2medoune.com/gestionbar
+      # Sous-dossier d'hebergement : l'app vit sous lp2medoune.com/gestionbar
       - PATH_BASE=/gestionbar
       # Email (mot de passe oublié, confirmation d'inscription). Les valeurs
       # proviennent du fichier .env (non versionné). Voir .env.example.
@@ -26,6 +26,10 @@ services:
     image: caddy:2-alpine
     container_name: gestionbar-caddy
     restart: unless-stopped
+    # Permet à Caddy, qui tourne dans Docker, de joindre les applications exposees sur l'hote
+    # comme LP2M Gestion Hopital sur host.docker.internal:5050.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "80:80"
       - "443:443"
