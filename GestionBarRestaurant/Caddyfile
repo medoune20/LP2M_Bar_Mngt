@@ -1,5 +1,6 @@
-# Domaine unique hébergeant plusieurs applications par sous-dossier.
-# HTTPS (Let's Encrypt) automatique pour lp2medoune.com et www.
+# LP2M - passerelle unique HTTPS pour toutes les applications.
+# Caddy gere automatiquement les certificats Let's Encrypt pour lp2medoune.com et www.
+# Ne pas lancer Nginx/Certbot sur les ports 80/443 en parallele.
 lp2medoune.com, www.lp2medoune.com {
     encode gzip
     header {
@@ -8,20 +9,28 @@ lp2medoune.com, www.lp2medoune.com {
         X-Frame-Options "DENY"
     }
 
-    # --- Application Gestion Bar : lp2medoune.com/gestionbar ---
-    # 'handle' (et non 'handle_path') conserve le préfixe /gestionbar dans l'URL ;
-    # l'application le retire via PATH_BASE et préfixe tous ses liens en conséquence.
+    # --- LP2M Gestion Bar / Restaurant ---
+    # URL publique : https://lp2medoune.com/gestionbar
+    # Le prefixe /gestionbar est conserve ; l'application le gere via PATH_BASE=/gestionbar.
     handle /gestionbar* {
         reverse_proxy app:8080
     }
 
-    # --- Page d'accueil du domaine : rediriger vers l'application ---
+    # --- LP2M Gestion Hopital ---
+    # URL publique : https://lp2medoune.com/hopital
+    # L'application Hopital expose temporairement son conteneur sur le port hote 5050.
+    # Le prefixe /hopital est conserve ; l'application doit gerer PATH_BASE=/hopital.
+    handle /hopital* {
+        reverse_proxy host.docker.internal:5050
+    }
+
+    # --- Accueil LP2M ---
     handle / {
         redir /gestionbar/ 302
     }
 
-    # --- Emplacement pour les futures applications ---
-    # handle /autreapp* {
-    #     reverse_proxy autreapp:8080
-    # }
+    # Toute autre route revient vers l'accueil LP2M.
+    handle {
+        redir /gestionbar/ 302
+    }
 }
