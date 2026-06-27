@@ -9,9 +9,27 @@ lp2medoune.com, www.lp2medoune.com {
         X-Frame-Options "DENY"
     }
 
+    # --- Compatibilite anciens liens Hopital ---
+    # Important : ces redirections sont placees AVANT les handles principaux.
+    # Elles corrigent les anciens liens/formulaires comme /Auth/Connexion
+    # qui doivent aller vers /hopital/Auth/Connexion.
+    @legacyAuth path /Auth /Auth/*
+    redir @legacyAuth /hopital{uri} 302
+
+    @legacyAccueil path /Accueil /Accueil/*
+    redir @legacyAccueil /hopital{uri} 302
+
+    @legacyPatient path /Patient /Patient/*
+    redir @legacyPatient /hopital{uri} 302
+
+    @legacyRdv path /RendezVous /RendezVous/*
+    redir @legacyRdv /hopital{uri} 302
+
+    @legacyHospital path /Consultation /Consultation/* /Examen /Examen/* /Hospitalisation /Hospitalisation/* /Departement /Departement/* /Medecin /Medecin/* /FileAttente /FileAttente/* /Paiement /Paiement/* /Comptabilite /Comptabilite/* /Alerte /Alerte/* /Mail /Mail/* /Lp2m /Lp2m/*
+    redir @legacyHospital /hopital{uri} 302
+
     # --- LP2M Gestion Bar / Restaurant ---
     # URL publique : https://lp2medoune.com/gestionbar
-    # Le prefixe /gestionbar est conserve ; l'application le gere via PATH_BASE=/gestionbar.
     handle /gestionbar* {
         reverse_proxy app:8080
     }
@@ -21,14 +39,6 @@ lp2medoune.com, www.lp2medoune.com {
     # Le prefixe /hopital est conserve ; l'application le gere via PATH_BASE=/hopital.
     handle /hopital* {
         reverse_proxy host.docker.internal:5050
-    }
-
-    # --- Compatibilite anciens liens Hopital ---
-    # Safari peut garder une ancienne page dont le formulaire poste vers /Auth/Connexion.
-    # Ces routes sont donc redirigees vers /hopital/... avant le fallback GestionBar.
-    @hopitalLegacy path /Auth* /Accueil* /Patient* /RendezVous* /Consultation* /Examen* /Hospitalisation* /Departement* /Medecin* /FileAttente* /Paiement* /Comptabilite* /Alerte* /Mail* /Lp2m*
-    handle @hopitalLegacy {
-        redir /hopital{uri} 302
     }
 
     # --- Accueil LP2M ---
