@@ -18,10 +18,17 @@ lp2medoune.com, www.lp2medoune.com {
 
     # --- LP2M Gestion Hopital ---
     # URL publique : https://lp2medoune.com/hopital
-    # L'application Hopital expose temporairement son conteneur sur le port hote 5050.
-    # Le prefixe /hopital est conserve ; l'application doit gerer PATH_BASE=/hopital.
+    # Le prefixe /hopital est conserve ; l'application le gere via PATH_BASE=/hopital.
     handle /hopital* {
         reverse_proxy host.docker.internal:5050
+    }
+
+    # --- Compatibilite anciens liens Hopital ---
+    # Safari peut garder une ancienne page dont le formulaire poste vers /Auth/Connexion.
+    # Ces routes sont donc redirigees vers /hopital/... avant le fallback GestionBar.
+    @hopitalLegacy path /Auth* /Accueil* /Patient* /RendezVous* /Consultation* /Examen* /Hospitalisation* /Departement* /Medecin* /FileAttente* /Paiement* /Comptabilite* /Alerte* /Mail* /Lp2m*
+    handle @hopitalLegacy {
+        redir /hopital{uri} 302
     }
 
     # --- Accueil LP2M ---
